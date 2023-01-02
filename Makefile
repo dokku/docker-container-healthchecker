@@ -91,7 +91,6 @@ build/deb/$(NAME)_$(VERSION)_amd64.deb: build/linux/$(NAME)-amd64
 	export SOURCE_DATE_EPOCH=$(shell git log -1 --format=%ct) \
 		&& mkdir -p build/deb \
 		&& fpm \
-		--after-install install/postinstall.sh \
 		--architecture amd64 \
 		--category utils \
 		--description "$$PACKAGE_DESCRIPTION" \
@@ -106,15 +105,12 @@ build/deb/$(NAME)_$(VERSION)_amd64.deb: build/linux/$(NAME)-amd64
 		--version $(VERSION) \
 		--verbose \
 		build/linux/$(NAME)-amd64=/usr/bin/$(NAME) \
-		install/systemd.service=/etc/systemd/system/$(NAME).service \
-		install/systemd.target=/etc/systemd/system/$(NAME).target \
 		LICENSE=/usr/share/doc/$(NAME)/copyright
 
 build/deb/$(NAME)_$(VERSION)_arm64.deb: build/linux/$(NAME)-arm64
 	export SOURCE_DATE_EPOCH=$(shell git log -1 --format=%ct) \
 		&& mkdir -p build/deb \
 		&& fpm \
-		--after-install install/postinstall.sh \
 		--architecture arm64 \
 		--category utils \
 		--description "$$PACKAGE_DESCRIPTION" \
@@ -129,15 +125,12 @@ build/deb/$(NAME)_$(VERSION)_arm64.deb: build/linux/$(NAME)-arm64
 		--version $(VERSION) \
 		--verbose \
 		build/linux/$(NAME)-arm64=/usr/bin/$(NAME) \
-		install/systemd.service=/etc/systemd/system/$(NAME).service \
-		install/systemd.target=/etc/systemd/system/$(NAME).target \
 		LICENSE=/usr/share/doc/$(NAME)/copyright
 
 build/deb/$(NAME)_$(VERSION)_armhf.deb: build/linux/$(NAME)-armhf
 	export SOURCE_DATE_EPOCH=$(shell git log -1 --format=%ct) \
 		&& mkdir -p build/deb \
 		&& fpm \
-		--after-install install/postinstall.sh \
 		--architecture armhf \
 		--category utils \
 		--description "$$PACKAGE_DESCRIPTION" \
@@ -152,15 +145,12 @@ build/deb/$(NAME)_$(VERSION)_armhf.deb: build/linux/$(NAME)-armhf
 		--version $(VERSION) \
 		--verbose \
 		build/linux/$(NAME)-armhf=/usr/bin/$(NAME) \
-		install/systemd.service=/etc/systemd/system/$(NAME).service \
-		install/systemd.target=/etc/systemd/system/$(NAME).target \
 		LICENSE=/usr/share/doc/$(NAME)/copyright
 
 build/rpm/$(NAME)-$(VERSION)-1.x86_64.rpm: build/linux/$(NAME)-amd64
 	export SOURCE_DATE_EPOCH=$(shell git log -1 --format=%ct) \
 		&& mkdir -p build/rpm \
 		&& fpm \
-		--after-install install/postinstall.sh \
 		--architecture x86_64 \
 		--category utils \
 		--description "$$PACKAGE_DESCRIPTION" \
@@ -176,8 +166,6 @@ build/rpm/$(NAME)-$(VERSION)-1.x86_64.rpm: build/linux/$(NAME)-amd64
 		--version $(VERSION) \
 		--verbose \
 		build/linux/$(NAME)-amd64=/usr/bin/$(NAME) \
-		install/systemd.service=/etc/systemd/system/$(NAME).service \
-		install/systemd.target=/etc/systemd/system/$(NAME).target \
 		LICENSE=/usr/share/doc/$(NAME)/copyright
 
 clean:
