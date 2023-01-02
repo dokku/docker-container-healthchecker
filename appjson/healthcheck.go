@@ -28,9 +28,9 @@ type Healthcheck struct {
 	InitialDelay int      `json:"initialDelay"`
 	Name         string   `json:"name"`
 	Path         string   `json:"path"`
+	Timeout      int      `json:"timeout"`
 	Type         string   `json:"type"`
 	Uptime       int      `json:"uptime"`
-	Wait         int      `json:"wait"`
 }
 
 func (h Healthcheck) GetInitialDelay() int {
@@ -71,12 +71,12 @@ func (h Healthcheck) GetRetries() int {
 	return h.Attempts - 1
 }
 
-func (h Healthcheck) GetWait() int {
-	if h.Wait <= 0 {
+func (h Healthcheck) GetTimeout() int {
+	if h.Timeout <= 0 {
 		return 5
 	}
 
-	return h.Wait
+	return h.Timeout
 }
 
 func (h Healthcheck) Validate() error {
@@ -132,9 +132,9 @@ func (h Healthcheck) executeCommandCheck(container types.ContainerJSON) ([]byte,
 
 func (h Healthcheck) dockerExec(container types.ContainerJSON, cmd []string, options ...tcexec.ProcessOption) (io.Reader, error) {
 	var ctx context.Context
-	if h.GetWait() > 0 {
+	if h.GetTimeout() > 0 {
 		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(context.Background(), time.Duration(h.GetWait())*time.Second)
+		ctx, cancel = context.WithTimeout(context.Background(), time.Duration(h.GetTimeout())*time.Second)
 		defer cancel()
 	} else {
 		ctx = context.Background()
@@ -203,8 +203,8 @@ func (h Healthcheck) executePathCheck(container types.ContainerJSON, containerPo
 	if h.GetRetries() > 0 {
 		client.SetRetryCount(h.GetRetries())
 	}
-	if h.GetWait() > 0 {
-		client.SetTimeout(time.Duration(h.GetWait()) * time.Second)
+	if h.GetTimeout() > 0 {
+		client.SetTimeout(time.Duration(h.GetTimeout()) * time.Second)
 	}
 
 	resp, err := client.R().

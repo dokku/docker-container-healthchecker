@@ -229,7 +229,7 @@ func (c *CheckCommand) processHealthcheck(healthcheck appjson.Healthcheck, conta
 		delay = int(time.Since(tt).Seconds() - float64(healthcheck.GetInitialDelay()))
 	}
 
-	logger.Info(fmt.Sprintf("Running healthcheck name='%s' attempts=%d delay=%d wait=%d", healthcheck.GetName(), healthcheck.Attempts, healthcheck.GetInitialDelay(), healthcheck.GetWait()))
+	logger.Info(fmt.Sprintf("Running healthcheck name='%s' attempts=%d delay=%d timeout=%d", healthcheck.GetName(), healthcheck.Attempts, healthcheck.GetInitialDelay(), healthcheck.GetTimeout()))
 	if delay > 0 {
 		time.Sleep(time.Duration(delay) * time.Second)
 	}

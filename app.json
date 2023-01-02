@@ -19,7 +19,7 @@
         "name": "command check",
         "description": "Checking if a command in the container runs as expected",
         "initialDelay": 10,
-        "wait": 5,
+        "timeout": 5,
         "attempts": 5,
         "command": [
           "/app/script.sh"
@@ -30,7 +30,7 @@
         "name": "Healthcheck-derp",
         "description": "Checking if the app responds to the /health/live endpoint",
         "path": "/health/live",
-        "wait": 1,
+        "timeout": 1,
         "attempts": 5
       }
     ]
