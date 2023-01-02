@@ -259,5 +259,5 @@ validate:
 	sha1sum build/rpm/$(NAME)-$(VERSION)-1.x86_64.rpm
 
 prebuild:
-	git config --global --add safe.directory $(PWD)
+	git config --global --add safe.directory $(shell pwd)
 	git status
