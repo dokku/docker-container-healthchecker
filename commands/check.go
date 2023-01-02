@@ -23,6 +23,7 @@ type CheckCommand struct {
 	command.Meta
 
 	appJSONFile string
+	headers     []string
 	checkType   string
 	networkName string
 	port        int
@@ -70,6 +71,7 @@ func (c *CheckCommand) ParsedArguments(args []string) (map[string]command.Argume
 func (c *CheckCommand) FlagSet() *flag.FlagSet {
 	f := c.Meta.FlagSet(c.Name(), command.FlagSetClient)
 	f.IntVar(&c.port, "port", 5000, "container port to check")
+	f.StringSliceVar(&c.headers, "headers", []string{}, "a list of headers to specify for path requests")
 	f.StringVar(&c.appJSONFile, "app-json", "app.json", "full path to app.json file")
 	f.StringVar(&c.checkType, "check-type", "startup", "check to interpret")
 	f.StringVar(&c.networkName, "network", "bridge", "container network to use for http 'path' checks")
@@ -83,6 +85,7 @@ func (c *CheckCommand) AutocompleteFlags() complete.Flags {
 		complete.Flags{
 			"--app-json":     complete.PredictAnything,
 			"--check-type":   complete.PredictSet("liveness", "readiness", "startup"),
+			"--headers":      complete.PredictAnything,
 			"--network":      complete.PredictAnything,
 			"--port":         complete.PredictAnything,
 			"--process-type": complete.PredictAnything,
@@ -234,7 +237,13 @@ func (c *CheckCommand) processHealthcheck(healthcheck appjson.Healthcheck, conta
 		time.Sleep(time.Duration(delay) * time.Second)
 	}
 
-	b, errs := healthcheck.Execute(container, c.port, c.networkName)
+	ctx := appjson.HealthcheckContext{
+		Headers: c.headers,
+		Network: c.networkName,
+		Port:    c.port,
+	}
+
+	b, errs := healthcheck.Execute(container, ctx)
 	if len(errs) > 0 {
 		if len(b) > 0 {
 			logger.Error(fmt.Sprintf("Error for healthcheck name='%s', output: %s", healthcheck.GetName(), strings.TrimSpace(string(b))))

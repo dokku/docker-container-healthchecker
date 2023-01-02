@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"strings"
 	"time"
 
 	retry "github.com/avast/retry-go"
@@ -32,6 +33,12 @@ type Healthcheck struct {
 	Type         string   `json:"type"`
 	Uptime       int      `json:"uptime"`
 	Wait         int      `json:"wait"`
+}
+
+type HealthcheckContext struct {
+	Headers []string
+	Network string
+	Port    int
 }
 
 func (h Healthcheck) GetInitialDelay() int {
@@ -104,7 +111,7 @@ func (h Healthcheck) Validate() error {
 	return nil
 }
 
-func (h Healthcheck) Execute(container types.ContainerJSON, containerPort int, networkName string) ([]byte, []error) {
+func (h Healthcheck) Execute(container types.ContainerJSON, ctx HealthcheckContext) ([]byte, []error) {
 	if err := h.Validate(); err != nil {
 		return []byte{}, []error{err}
 	}
@@ -114,7 +121,7 @@ func (h Healthcheck) Execute(container types.ContainerJSON, containerPort int, n
 	}
 
 	if h.Path != "" {
-		return h.executePathCheck(container, containerPort, networkName)
+		return h.executePathCheck(container, ctx)
 	}
 
 	return h.executeUptimeCheck(container)
@@ -202,10 +209,10 @@ func (h Healthcheck) dockerExec(container types.ContainerJSON, cmd []string, opt
 	return opt.Reader, nil
 }
 
-func (h Healthcheck) executePathCheck(container types.ContainerJSON, containerPort int, networkName string) ([]byte, []error) {
-	endpoint, ok := container.NetworkSettings.Networks[networkName]
+func (h Healthcheck) executePathCheck(container types.ContainerJSON, ctx HealthcheckContext) ([]byte, []error) {
+	endpoint, ok := container.NetworkSettings.Networks[ctx.Network]
 	if !ok {
-		return []byte{}, []error{fmt.Errorf("inspect container: container '%s' not connected to network '%s'", container.ID, networkName)}
+		return []byte{}, []error{fmt.Errorf("inspect container: container '%s' not connected to network '%s'", container.ID, ctx.Network)}
 	}
 
 	client := resty.New()
@@ -216,8 +223,17 @@ func (h Healthcheck) executePathCheck(container types.ContainerJSON, containerPo
 		client.SetTimeout(time.Duration(h.GetTimeout()) * time.Second)
 	}
 
+	for _, header := range ctx.Headers {
+		parts := strings.SplitN(header, ":", 2)
+		if len(parts) != 2 {
+			return []byte{}, []error{fmt.Errorf("invalid header, must be delimited by ':' (colon) character: '%s'", header)}
+		}
+
+		client.SetHeader(strings.TrimSpace(parts[0]), strings.TrimSpace(parts[1]))
+	}
+
 	resp, err := client.R().
-		Get(fmt.Sprintf("http://%s:%d%s", endpoint.IPAddress, containerPort, h.GetPath()))
+		Get(fmt.Sprintf("http://%s:%d%s", endpoint.IPAddress, ctx.Port, h.GetPath()))
 	if err != nil {
 		return []byte{}, []error{err}
 	}

@@ -46,7 +46,13 @@ Executes an http request against the container at the specified `path`. The cont
 
 HTTP `path` checks respect the `attempts`, `timeout` and `wait` properties.
 
-No extra headers are sent with http `path` requests. To further customize the type of request performed, please see the `command` check type.
+Custom headers may be specified for http `path` requests by utilizing the `--header` flag like so:
+
+```shell
+docker-container-healthchecker check cb0ce984f2aa --header 'X-Forwarded-Proto: https'
+```
+
+To further customize the type of request performed, please see the `command` check type.
 
 If the `path` type is in use, the `command` and `uptime` healthcheck properties must be empty.
 
