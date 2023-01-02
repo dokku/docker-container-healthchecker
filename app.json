@@ -2,20 +2,23 @@
   "healthchecks": {
     "web": [
       {
-        "type":        "startup",
-        "name":        "web check",
+        "type": "startup",
+        "name": "web check",
         "description": "Checking if the app responds to the /health/ready endpoint",
-        "path":        "/health/ready",
-        "content":     "this would only be checked for docker-local because kubernetes doesn't support content checks",
-        "initialDelaySeconds": 10,
-        "wait": 1,
-        "attempts": 5
+        "path": "/health/ready",
+        "attempts": 3
       },
       {
-        "type": "liveness",
+        "type": "startup",
+        "name": "uptime check",
+        "description": "Checking if the container is up for at least 10 seconds",
+        "uptime": 346600
+      },
+      {
+        "type": "readiness",
         "name": "command check",
         "description": "Checking if a command in the container runs as expected",
-        "initialDelaySeconds": 10,
+        "initialDelay": 10,
         "wait": 5,
         "attempts": 5,
         "command": [
@@ -27,7 +30,6 @@
         "name": "Healthcheck-derp",
         "description": "Checking if the app responds to the /health/live endpoint",
         "path": "/health/live",
-        "initialDelaySeconds": 10,
         "wait": 1,
         "attempts": 5
       }

@@ -1,10 +1,10 @@
 package appjson
 
 import (
-	"bytes"
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"time"
@@ -23,23 +23,22 @@ type AppJSON struct {
 }
 
 type Healthcheck struct {
-	Type                string   `json:"type"`
-	Name                string   `json:"name"`
-	Description         string   `json:"description"`
-	Path                string   `json:"path"`
-	Content             string   `json:"content"`
-	InitialDelaySeconds int      `json:"initialDelaySeconds"`
-	Wait                int      `json:"wait"`
-	Attempts            int      `json:"attempts"`
-	Command             []string `json:"command"`
+	Attempts     int      `json:"attempts"`
+	Command      []string `json:"command"`
+	InitialDelay int      `json:"initialDelay"`
+	Name         string   `json:"name"`
+	Path         string   `json:"path"`
+	Type         string   `json:"type"`
+	Uptime       int      `json:"uptime"`
+	Wait         int      `json:"wait"`
 }
 
 func (h Healthcheck) GetInitialDelay() int {
-	if h.InitialDelaySeconds <= 0 {
+	if h.InitialDelay <= 0 {
 		return 0
 	}
 
-	return h.InitialDelaySeconds
+	return h.InitialDelay
 }
 
 func (h Healthcheck) GetName() string {
@@ -64,8 +63,9 @@ func (h Healthcheck) GetPath() string {
 }
 
 func (h Healthcheck) GetRetries() int {
+	defaultAttempts := 3
 	if h.Attempts <= 0 {
-		return 0
+		return defaultAttempts - 1
 	}
 
 	return h.Attempts - 1
@@ -82,13 +82,16 @@ func (h Healthcheck) GetWait() int {
 func (h Healthcheck) Validate() error {
 	if len(h.Command) > 0 {
 		if h.Path != "" {
-			return fmt.Errorf("healthchecks '%s' cannot contain both an http 'path' to check and a container 'command' to execute", h.GetName())
-		}
-
-		if h.Content != "" {
-			return fmt.Errorf("command healthcheck '%s' cannot specify content to expect", h.GetName())
+			return fmt.Errorf("healthcheck name='%s' cannot contain both a container 'command' to execute and an http 'path' to check", h.GetName())
+		} else if h.Uptime > 0 {
+			return fmt.Errorf("healthcheck name='%s' cannot contain both a container 'command' to execute and an 'uptime' seconds value", h.GetName())
 		}
 	}
+
+	if h.Path != "" && h.Uptime > 0 {
+		return fmt.Errorf("healthcheck name='%s' cannot contain both an http 'path' to check and an 'uptime' seconds value", h.GetName())
+	}
+
 	return nil
 }
 
@@ -97,11 +100,15 @@ func (h Healthcheck) Execute(container types.ContainerJSON, containerPort int) (
 		return []byte{}, []error{err}
 	}
 
+	if len(h.Command) > 0 {
+		return h.executeCommandCheck(container)
+	}
+
 	if h.Path != "" {
 		return h.executePathCheck(container, containerPort)
 	}
 
-	return h.executeCommandCheck(container)
+	return h.executeUptimeCheck(container)
 }
 
 func (h Healthcheck) executeCommandCheck(container types.ContainerJSON) ([]byte, []error) {
@@ -217,9 +224,44 @@ func (h Healthcheck) executePathCheck(container types.ContainerJSON, containerPo
 		return resp.Body(), []error{fmt.Errorf("unexpected status code: %d", resp.StatusCode())}
 	}
 
-	if h.Content != "" && !bytes.Contains(resp.Body(), []byte(h.Content)) {
-		return resp.Body(), []error{fmt.Errorf("unable to find expected content: %s", h.Content)}
+	return resp.Body(), []error{}
+}
+
+func (h Healthcheck) executeUptimeCheck(container types.ContainerJSON) ([]byte, []error) {
+	tt, err := time.Parse(time.RFC3339Nano, container.State.StartedAt)
+	if err != nil {
+		return []byte{}, []error{err}
+	}
+	delay := 0
+	uptime := int(time.Since(tt).Seconds())
+	if uptime < h.Uptime {
+		delay = h.Uptime - uptime
 	}
 
-	return resp.Body(), []error{}
+	fmt.Printf("%d\n", h.Uptime)
+	fmt.Printf("%d\n", uptime)
+	fmt.Printf("%d\n", delay)
+	if delay > 0 {
+		time.Sleep(time.Duration(delay) * time.Second)
+	}
+
+	cli, err := client.NewClientWithOpts(
+		client.FromEnv,
+		client.WithAPIVersionNegotiation(),
+	)
+	if err != nil {
+		return []byte{}, []error{err}
+	}
+
+	container, err = cli.ContainerInspect(context.Background(), container.ID)
+	if err != nil {
+		return []byte{}, []error{err}
+	}
+
+	status := fmt.Sprintf("state=%s", container.State.Status)
+	if !container.State.Running {
+		return []byte(status), []error{errors.New("container state is not running")}
+	}
+
+	return []byte(status), []error{}
 }
