@@ -24,6 +24,7 @@ type CheckCommand struct {
 
 	appJSONFile string
 	checkType   string
+	networkName string
 	port        int
 	processType string
 }
@@ -71,6 +72,7 @@ func (c *CheckCommand) FlagSet() *flag.FlagSet {
 	f.IntVar(&c.port, "port", 5000, "container port to check")
 	f.StringVar(&c.appJSONFile, "app-json", "app.json", "full path to app.json file")
 	f.StringVar(&c.checkType, "check-type", "startup", "check to interpret")
+	f.StringVar(&c.networkName, "network", "bridge", "container network to use for http 'path' checks")
 	f.StringVar(&c.processType, "process-type", "web", "process type to check")
 	return f
 }
@@ -81,6 +83,7 @@ func (c *CheckCommand) AutocompleteFlags() complete.Flags {
 		complete.Flags{
 			"--app-json":     complete.PredictAnything,
 			"--check-type":   complete.PredictSet("liveness", "readiness", "startup"),
+			"--network":      complete.PredictAnything,
 			"--port":         complete.PredictAnything,
 			"--process-type": complete.PredictAnything,
 		},
@@ -180,7 +183,7 @@ func (c *CheckCommand) Run(args []string) int {
 		wg.Add(1)
 		go func(h appjson.Healthcheck) {
 			defer wg.Done()
-			responseChan <- processHealthcheck(h, container, c.port, logger)
+			responseChan <- c.processHealthcheck(h, container, logger)
 		}(healthcheck)
 	}
 
@@ -212,7 +215,7 @@ type HealthcheckResponse struct {
 	Errors          []error
 }
 
-func processHealthcheck(healthcheck appjson.Healthcheck, container types.ContainerJSON, containerPort int, logger *command.ZerologUi) HealthcheckResponse {
+func (c *CheckCommand) processHealthcheck(healthcheck appjson.Healthcheck, container types.ContainerJSON, logger *command.ZerologUi) HealthcheckResponse {
 	tt, err := time.Parse(time.RFC3339, container.State.StartedAt)
 	if err != nil {
 		return HealthcheckResponse{
@@ -231,7 +234,7 @@ func processHealthcheck(healthcheck appjson.Healthcheck, container types.Contain
 		time.Sleep(time.Duration(delay) * time.Second)
 	}
 
-	b, errs := healthcheck.Execute(container, containerPort)
+	b, errs := healthcheck.Execute(container, c.port, c.networkName)
 	if len(errs) > 0 {
 		if len(b) > 0 {
 			logger.Error(fmt.Sprintf("Error for healthcheck name='%s', output: %s", healthcheck.GetName(), strings.TrimSpace(string(b))))

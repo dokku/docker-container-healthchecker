@@ -95,7 +95,7 @@ func (h Healthcheck) Validate() error {
 	return nil
 }
 
-func (h Healthcheck) Execute(container types.ContainerJSON, containerPort int) ([]byte, []error) {
+func (h Healthcheck) Execute(container types.ContainerJSON, containerPort int, networkName string) ([]byte, []error) {
 	if err := h.Validate(); err != nil {
 		return []byte{}, []error{err}
 	}
@@ -105,7 +105,7 @@ func (h Healthcheck) Execute(container types.ContainerJSON, containerPort int) (
 	}
 
 	if h.Path != "" {
-		return h.executePathCheck(container, containerPort)
+		return h.executePathCheck(container, containerPort, networkName)
 	}
 
 	return h.executeUptimeCheck(container)
@@ -192,8 +192,7 @@ func (h Healthcheck) dockerExec(container types.ContainerJSON, cmd []string, opt
 	return opt.Reader, nil
 }
 
-func (h Healthcheck) executePathCheck(container types.ContainerJSON, containerPort int) ([]byte, []error) {
-	networkName := "bridge"
+func (h Healthcheck) executePathCheck(container types.ContainerJSON, containerPort int, networkName string) ([]byte, []error) {
 	endpoint, ok := container.NetworkSettings.Networks[networkName]
 	if !ok {
 		return []byte{}, []error{fmt.Errorf("inspect container: container '%s' not connected to network '%s'", container.ID, networkName)}
