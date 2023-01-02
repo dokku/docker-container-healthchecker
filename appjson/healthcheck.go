@@ -64,7 +64,7 @@ func (h Healthcheck) GetPath() string {
 }
 
 func (h Healthcheck) GetRetries() int {
-	defaultAttempts := 3
+	defaultAttempts := 5
 	if h.Attempts <= 0 {
 		return defaultAttempts - 1
 	}
