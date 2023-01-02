@@ -24,8 +24,8 @@ body:
   - type: textarea
     id: report-output
     attributes:
-      label: docker-container-healthchecks version
-      description: Please paste the output of the command `docker-container-healthchecks version`
+      label: docker-container-healthchecker version
+      description: Please paste the output of the command `docker-container-healthchecker version`
     validations:
       required: true
   - type: textarea

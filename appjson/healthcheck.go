@@ -15,7 +15,7 @@ import (
 	"github.com/moby/moby/client"
 	tcexec "github.com/testcontainers/testcontainers-go/exec"
 
-	"docker-container-healthchecks/http"
+	"docker-container-healthchecker/http"
 )
 
 type AppJSON struct {

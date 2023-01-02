@@ -4,14 +4,14 @@ import (
 	"fmt"
 	"os"
 
-	"docker-container-healthchecks/commands"
+	"docker-container-healthchecker/commands"
 
 	"github.com/josegonzalez/cli-skeleton/command"
 	"github.com/mitchellh/cli"
 )
 
 // The name of the cli tool
-var AppName = "docker-container-healthchecks"
+var AppName = "docker-container-healthchecker"
 
 // Holds the version
 var Version string

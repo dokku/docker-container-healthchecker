@@ -1,8 +1,8 @@
-NAME = docker-container-healthchecks
-EMAIL = docker-container-healthchecks@josediazgonzalez.com
+NAME = docker-container-healthchecker
+EMAIL = docker-container-healthchecker@josediazgonzalez.com
 MAINTAINER = dokku
 MAINTAINER_NAME = Jose Diaz-Gonzalez
-REPOSITORY = docker-container-healthchecks
+REPOSITORY = docker-container-healthchecker
 HARDWARE = $(shell uname -m)
 SYSTEM_NAME  = $(shell uname -s | tr '[:upper:]' '[:lower:]')
 BASE_VERSION ?= 0.14.0

@@ -16,7 +16,7 @@ import (
 	"github.com/posener/complete"
 	flag "github.com/spf13/pflag"
 
-	"docker-container-healthchecks/appjson"
+	"docker-container-healthchecker/appjson"
 )
 
 type CheckCommand struct {

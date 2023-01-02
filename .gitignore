@@ -23,4 +23,4 @@ validation/*
 # .env files
 .env*
 
-docker-container-healthchecks
+docker-container-healthchecker

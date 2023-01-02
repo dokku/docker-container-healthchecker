@@ -1,4 +1,4 @@
-# docker-container-healthchecks
+# docker-container-healthchecker
 
 Runs healthchecks against local docker containers
 

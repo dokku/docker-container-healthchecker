@@ -1,4 +1,4 @@
-module docker-container-healthchecks
+module docker-container-healthchecker
 
 go 1.19
 
