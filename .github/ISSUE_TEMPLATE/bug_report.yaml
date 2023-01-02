@@ -1,0 +1,37 @@
+---
+name: Bug Report
+description: File a bug report
+labels: ["needs: investigation", "type: bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Consider [sponsoring Dokku](https://github.com/sponsors/dokku). Sponsorship goes directly to supporting activities such as fixing bugs and general maintenance.
+  - type: textarea
+    id: description
+    attributes:
+      label: Description of problem
+      description: What happened? What did you expect to happen?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: What are the steps that we need to follow to reproduce this issue?
+    validations:
+      required: true
+  - type: textarea
+    id: report-output
+    attributes:
+      label: docker-container-healthchecks version
+      description: Please paste the output of the command `docker-container-healthchecks version`
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: "Output of failing command"
+      render: Text
+    validations:
+      required: false

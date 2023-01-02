@@ -1,0 +1,3 @@
+FROM scratch
+COPY ./build/linux/docker-container-healthchecks /docker-container-healthchecks
+ENTRYPOINT ["/docker-container-healthchecks"]

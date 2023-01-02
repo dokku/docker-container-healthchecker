@@ -1,0 +1,36 @@
+{
+  "healthchecks": {
+    "web": [
+      {
+        "type":        "readiness",
+        "name":        "web check",
+        "description": "Checking if the app responds to the /health/ready endpoint",
+        "path":        "/health/ready",
+        "content":     "this would only be checked for docker-local because kubernetes doesn't support content checks",
+        "initialDelaySeconds": 10,
+        "wait": 1,
+        "attempts": 5
+      },
+      {
+        "type": "liveness",
+        "name": "command check",
+        "description": "Checking if a command in the container runs as expected",
+        "initialDelaySeconds": 10,
+        "wait": 5,
+        "attempts": 5,
+        "command": [
+          "/app/script.sh"
+        ]
+      },
+      {
+        "type": "liveness",
+        "name": "Healthcheck-derp",
+        "description": "Checking if the app responds to the /health/live endpoint",
+        "path": "/health/live",
+        "initialDelaySeconds": 10,
+        "wait": 1,
+        "attempts": 5
+      }
+    ]
+  }
+}
