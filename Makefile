@@ -259,4 +259,4 @@ validate:
 	sha1sum build/rpm/$(NAME)-$(VERSION)-1.x86_64.rpm
 
 prebuild:
-	true
+	git status
