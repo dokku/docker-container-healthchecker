@@ -66,7 +66,7 @@ If the `uptime` type is in use, the `command` and `path` healthcheck properties 
 
 ### File Format
 
-Healthchecks are defined within a json file and have the following properties:
+Healthchecks are defined within a json file and have the following properties (the respective scheduler properties are also noted for comparison):
 
 | field        | default                          | description                                    | scheduler aliases (kubernetes, nomad) |
 |--------------|----------------------------------|------------------------------------------------|---------------------------------------|
