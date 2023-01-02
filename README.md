@@ -17,7 +17,48 @@ docker-container-healthchecker check cb0ce984f2aa
 
 By default, the checks specified for the `web` process type are executed. If the process-type has no checks specified, a default `uptime` container check of 10 seconds is performed.
 
-## File Format
+### Check types
+
+#### `command`
+
+Runs a command within the specified container. If the command exits non-zero, the output is printed and the check is considered failed.
+
+As the `command` type is run within the container environment, it can be used to perform dynamic checks using environment variables exposed to the container. For example, it may be used to simulate content checks on http endpoints like so:
+
+```shell
+#!/usr/bin/env bash
+
+OUTPUT="$(curl http://localhost:$PORT/some-file.js)"
+if ! grep jQuery <<< "$OUTPUT"; then
+  echo "Expected in output: jQuery"
+  echo "Output: $output"
+  exit 1
+fi
+```
+
+`command` checks respect the `attempts` and `wait` properties, where the latter is treated as a timeout for the command.
+
+If the `command` type is in use, the `path` and `uptime` healthcheck properties must be empty.
+
+#### `path`
+
+Executes an http request against the container at the specified `path`. The container IP address is fetched from the `bridge` network and the port is default to `5000`, though both settings can be overridden by the `--network` and `--port` flags, respectively.
+
+HTTP `path` checks respect the `attempts` and `wait` properties, where the latter is treated as a timeout for the request.
+
+No extra headers are sent with http `path` requests. To further customize the type of request performed, please see the `command` check type.
+
+If the `path` type is in use, the `command` and `uptime` healthcheck properties must be empty.
+
+#### `uptime`
+
+Ensures the container is up for at least `uptime` in seconds. If a container has restarted at all during that time, it is treated as an unhealthy container.
+
+`uptime` checks _do not_ respect the `attempts` and `wait` properties.
+
+If the `uptime` type is in use, the `command` and `path` healthcheck properties must be empty.
+
+### File Format
 
 Healthchecks are defined within a json file and have the following properties:
 
