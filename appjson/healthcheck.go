@@ -31,6 +31,7 @@ type Healthcheck struct {
 	Timeout      int      `json:"timeout"`
 	Type         string   `json:"type"`
 	Uptime       int      `json:"uptime"`
+	Wait         int      `json:"wait"`
 }
 
 func (h Healthcheck) GetInitialDelay() int {
@@ -79,6 +80,14 @@ func (h Healthcheck) GetTimeout() int {
 	return h.Timeout
 }
 
+func (h Healthcheck) GetWait() int {
+	if h.Wait <= 0 {
+		return 5
+	}
+
+	return h.Wait
+}
+
 func (h Healthcheck) Validate() error {
 	if len(h.Command) > 0 {
 		if h.Path != "" {
@@ -120,6 +129,7 @@ func (h Healthcheck) executeCommandCheck(container types.ContainerJSON) ([]byte,
 			return rerr
 		},
 		retry.Attempts(uint(h.Attempts)),
+		retry.Delay(time.Duration(h.GetWait())*time.Second),
 	)
 
 	b, berr := io.ReadAll(reader)
@@ -200,9 +210,8 @@ func (h Healthcheck) executePathCheck(container types.ContainerJSON, containerPo
 
 	client := resty.New()
 	client.SetLogger(http.CreateLogger())
-	if h.GetRetries() > 0 {
-		client.SetRetryCount(h.GetRetries())
-	}
+	client.SetRetryCount(h.GetRetries())
+	client.SetRetryWaitTime(time.Duration(h.GetWait()) * time.Second)
 	if h.GetTimeout() > 0 {
 		client.SetTimeout(time.Duration(h.GetTimeout()) * time.Second)
 	}

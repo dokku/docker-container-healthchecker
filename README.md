@@ -36,7 +36,7 @@ if ! grep jQuery <<< "$OUTPUT"; then
 fi
 ```
 
-`command` checks respect the `attempts` and `timeout` properties, where the latter is treated as a timeout for the command.
+`command` checks respect the `attempts`, `timeout` and `wait` properties.
 
 If the `command` type is in use, the `path` and `uptime` healthcheck properties must be empty.
 
@@ -44,7 +44,7 @@ If the `command` type is in use, the `path` and `uptime` healthcheck properties 
 
 Executes an http request against the container at the specified `path`. The container IP address is fetched from the `bridge` network and the port is default to `5000`, though both settings can be overridden by the `--network` and `--port` flags, respectively.
 
-HTTP `path` checks respect the `attempts` and `timeout` properties, where the latter is treated as a timeout for the request.
+HTTP `path` checks respect the `attempts`, `timeout` and `wait` properties.
 
 No extra headers are sent with http `path` requests. To further customize the type of request performed, please see the `command` check type.
 
@@ -54,7 +54,7 @@ If the `path` type is in use, the `command` and `uptime` healthcheck properties 
 
 Ensures the container is up for at least `uptime` in seconds. If a container has restarted at all during that time, it is treated as an unhealthy container.
 
-`uptime` checks _do not_ respect the `attempts` and `timeout` properties.
+`uptime` checks _do not_ respect the `attempts`, `timeout` and `wait` properties.
 
 If the `uptime` type is in use, the `command` and `path` healthcheck properties must be empty.
 
@@ -73,6 +73,7 @@ Healthchecks are defined within a json file and have the following properties:
 - `type`: (default: `""` (none), options: liveness, readiness, startup) Type of the healthcheck.
 - `uptime`: (default: `""` (none) ) Amount of time the container must be alive before the container is considered healthy. Any restarts will cause this to check to fail, and this check does not respect retries.
     - Errata: This property cannot be specified if the healthcheck also has either a `command` or `path` property specified
+- `wait`: (default: `5`, unit: seconds): Number of seconds to wait between healthcheck attempts.
 
 > Any extra properties are ignored
 
