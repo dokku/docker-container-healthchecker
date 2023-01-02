@@ -175,32 +175,28 @@ func (c *CheckCommand) Run(args []string) int {
 	}
 
 	var wg sync.WaitGroup
-	wgDone := make(chan bool)
-	errChannel := make(chan ErrContainer)
+	responseChan := make(chan HealthcheckResponse)
 	for _, healthcheck := range healthchecks {
 		wg.Add(1)
-		healthcheck := healthcheck
-		go func() {
+		go func(h appjson.Healthcheck) {
 			defer wg.Done()
-			processHealthcheck(healthcheck, container, c.port, logger, errChannel)
-		}()
+			responseChan <- processHealthcheck(h, container, c.port, logger)
+		}(healthcheck)
 	}
 
 	go func() {
 		wg.Wait()
-		close(wgDone)
+		close(responseChan)
 	}()
 
 	hasErrors := false
-	select {
-	case <-wgDone:
-		break
-	case container := <-errChannel:
-		close(errChannel)
-		if len(container.Errors) > 0 {
+	for resp := range responseChan {
+		if len(resp.Errors) > 0 {
 			hasErrors = true
-			err := container.Errors[len(container.Errors)-1]
-			logger.Error(fmt.Sprintf("Failure in name='%s': %s", container.HealthcheckName, err.Error()))
+			err := resp.Errors[len(resp.Errors)-1]
+			logger.Error(fmt.Sprintf("Failure in name='%s': %s", resp.HealthcheckName, err.Error()))
+		} else {
+			logger.Info(fmt.Sprintf("Healthcheck succeeded name='%s'", resp.HealthcheckName))
 		}
 	}
 
@@ -211,19 +207,18 @@ func (c *CheckCommand) Run(args []string) int {
 	return 0
 }
 
-type ErrContainer struct {
+type HealthcheckResponse struct {
 	HealthcheckName string
 	Errors          []error
 }
 
-func processHealthcheck(healthcheck appjson.Healthcheck, container types.ContainerJSON, containerPort int, logger *command.ZerologUi, errChannel chan<- ErrContainer) {
+func processHealthcheck(healthcheck appjson.Healthcheck, container types.ContainerJSON, containerPort int, logger *command.ZerologUi) HealthcheckResponse {
 	tt, err := time.Parse(time.RFC3339, container.State.StartedAt)
 	if err != nil {
-		errChannel <- ErrContainer{
+		return HealthcheckResponse{
 			HealthcheckName: healthcheck.GetName(),
 			Errors:          []error{err},
 		}
-		return
 	}
 
 	delay := 0
@@ -242,13 +237,13 @@ func processHealthcheck(healthcheck appjson.Healthcheck, container types.Contain
 			logger.Error(fmt.Sprintf("Error for healthcheck name='%s', output: %s", healthcheck.GetName(), strings.TrimSpace(string(b))))
 		}
 
-		errChannel <- ErrContainer{
+		return HealthcheckResponse{
 			HealthcheckName: healthcheck.GetName(),
 			Errors:          errs,
 		}
-		return
 	}
-	errChannel <- ErrContainer{
+
+	return HealthcheckResponse{
 		HealthcheckName: healthcheck.GetName(),
 		Errors:          []error{},
 	}
