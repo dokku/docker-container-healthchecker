@@ -70,7 +70,7 @@ func (c *CheckCommand) FlagSet() *flag.FlagSet {
 	f := c.Meta.FlagSet(c.Name(), command.FlagSetClient)
 	f.IntVar(&c.port, "port", 5000, "container port to check")
 	f.StringVar(&c.appJSONFile, "app-json", "app.json", "full path to app.json file")
-	f.StringVar(&c.checkType, "check-type", "readiness", "check to interpret")
+	f.StringVar(&c.checkType, "check-type", "startup", "check to interpret")
 	f.StringVar(&c.processType, "process-type", "web", "process type to check")
 	return f
 }
@@ -80,7 +80,7 @@ func (c *CheckCommand) AutocompleteFlags() complete.Flags {
 		c.Meta.AutocompleteFlags(command.FlagSetClient),
 		complete.Flags{
 			"--app-json":     complete.PredictAnything,
-			"--check-type":   complete.PredictSet("liveness", "readiness"),
+			"--check-type":   complete.PredictSet("liveness", "readiness", "startup"),
 			"--port":         complete.PredictAnything,
 			"--process-type": complete.PredictAnything,
 		},
