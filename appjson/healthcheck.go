@@ -257,5 +257,9 @@ func (h Healthcheck) executeUptimeCheck(container types.ContainerJSON) ([]byte, 
 		return []byte(status), []error{errors.New("container state is not running")}
 	}
 
+	if container.RestartCount > 0 {
+		return []byte(status), []error{fmt.Errorf("container has restarted %d times", container.RestartCount)}
+	}
+
 	return []byte(status), []error{}
 }
