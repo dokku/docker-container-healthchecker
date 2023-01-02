@@ -238,9 +238,6 @@ func (h Healthcheck) executeUptimeCheck(container types.ContainerJSON) ([]byte, 
 		delay = h.Uptime - uptime
 	}
 
-	fmt.Printf("%d\n", h.Uptime)
-	fmt.Printf("%d\n", uptime)
-	fmt.Printf("%d\n", delay)
 	if delay > 0 {
 		time.Sleep(time.Duration(delay) * time.Second)
 	}
