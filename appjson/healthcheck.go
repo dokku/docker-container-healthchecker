@@ -200,8 +200,6 @@ func (h Healthcheck) executePathCheck(container types.ContainerJSON, containerPo
 	}
 
 	client := resty.New()
-	client.SetDebug(true)
-	client.EnableTrace()
 	client.SetLogger(http.CreateLogger())
 	if h.GetRetries() > 0 {
 		client.SetRetryCount(h.GetRetries())
