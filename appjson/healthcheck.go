@@ -16,7 +16,7 @@ import (
 	"github.com/moby/moby/client"
 	tcexec "github.com/testcontainers/testcontainers-go/exec"
 
-	"docker-container-healthchecker/http"
+	"docker-container-healthchecker/logger"
 )
 
 type AppJSON struct {
@@ -216,7 +216,7 @@ func (h Healthcheck) executePathCheck(container types.ContainerJSON, ctx Healthc
 	}
 
 	client := resty.New()
-	client.SetLogger(http.CreateLogger())
+	client.SetLogger(logger.CreateLogger())
 	client.SetRetryCount(h.GetRetries())
 	client.SetRetryWaitTime(time.Duration(h.GetWait()) * time.Second)
 	if h.GetTimeout() > 0 {
