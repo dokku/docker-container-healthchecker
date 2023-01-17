@@ -1,6 +1,7 @@
 package appjson
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
 	"encoding/json"
@@ -24,15 +25,16 @@ type AppJSON struct {
 }
 
 type Healthcheck struct {
-	Attempts     int      `json:"attempts"`
-	Command      []string `json:"command"`
-	InitialDelay int      `json:"initialDelay"`
-	Name         string   `json:"name"`
-	Path         string   `json:"path"`
-	Timeout      int      `json:"timeout"`
-	Type         string   `json:"type"`
-	Uptime       int      `json:"uptime"`
-	Wait         int      `json:"wait"`
+	Attempts     int      `json:"attempts,omitempty"`
+	Command      []string `json:"command,omitempty"`
+	Content      string   `json:"content,omitempty"`
+	InitialDelay int      `json:"initialDelay,omitempty"`
+	Name         string   `json:"name,omitempty"`
+	Path         string   `json:"path,omitempty"`
+	Timeout      int      `json:"timeout,omitempty"`
+	Type         string   `json:"type,omitempty"`
+	Uptime       int      `json:"uptime,omitempty"`
+	Wait         int      `json:"wait,omitempty"`
 }
 
 type HealthcheckContext struct {
@@ -238,15 +240,20 @@ func (h Healthcheck) executePathCheck(container types.ContainerJSON, ctx Healthc
 		return []byte{}, []error{err}
 	}
 
+	body := resp.Body()
 	if resp.StatusCode() < 200 {
-		return resp.Body(), []error{fmt.Errorf("unexpected status code: %d", resp.StatusCode())}
+		return body, []error{fmt.Errorf("unexpected status code: %d", resp.StatusCode())}
 	}
 
 	if resp.StatusCode() >= 400 {
-		return resp.Body(), []error{fmt.Errorf("unexpected status code: %d", resp.StatusCode())}
+		return body, []error{fmt.Errorf("unexpected status code: %d", resp.StatusCode())}
 	}
 
-	return resp.Body(), []error{}
+	if h.Content != "" && !bytes.Contains(body, []byte(h.Content)) {
+		return body, []error{fmt.Errorf("unable to find expected content in response body: %s", h.Content)}
+	}
+
+	return body, []error{}
 }
 
 func (h Healthcheck) executeUptimeCheck(container types.ContainerJSON) ([]byte, []error) {

@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strings"
 	"sync"
@@ -116,7 +115,7 @@ func (c *CheckCommand) Run(args []string) int {
 	}
 
 	logger.LogHeader2(fmt.Sprintf("Reading app.json file from %s", c.appJSONFile))
-	b, err := ioutil.ReadFile(c.appJSONFile)
+	b, err := os.ReadFile(c.appJSONFile)
 	if err != nil {
 		logger.Error(err.Error())
 		return 1
