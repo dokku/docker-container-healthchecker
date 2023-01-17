@@ -8,6 +8,8 @@ Runs healthchecks against local docker containers
 
 ## Usage
 
+### check command
+
 After creating an app.json file, execute the healthchecker like so:
 
 ```shell
@@ -16,6 +18,26 @@ docker-container-healthchecker check cb0ce984f2aa
 ```
 
 By default, the checks specified for the `web` process type are executed. If the process-type has no checks specified, a default `uptime` container check of 10 seconds is performed.
+
+### convert command
+
+The convert command can be used to convert the `CHECKS` file format used by Dokku into the healthcheck format used by `docker-container-healthchecker`
+
+```shell
+docker-container-healthchecker convert path/to/CHECKS
+```
+
+By default, the output will be written to stdout. This output can be pretty printed using the `--pretty` flag:
+
+```shell
+docker-container-healthchecker convert path/to/CHECKS --pretty
+```
+
+An existing `app.json` file can also be updated by specifying the path to an `app.json` file via the `--app-json` flag. If the file does not exist, it will be created. This also respects pretty printing via the `--pretty` flag.
+
+```shell
+docker-container-healthchecker convert path/to/CHECKS --pretty --app.json path/to/app.json
+```
 
 ### Check types
 

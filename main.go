@@ -42,6 +42,9 @@ func Commands(meta command.Meta) map[string]cli.CommandFactory {
 		"check": func() (cli.Command, error) {
 			return &commands.CheckCommand{Meta: meta}, nil
 		},
+		"convert": func() (cli.Command, error) {
+			return &commands.ConvertCommand{Meta: meta}, nil
+		},
 		"version": func() (cli.Command, error) {
 			return &command.VersionCommand{Meta: meta}, nil
 		},
