@@ -3,7 +3,7 @@ module docker-container-healthchecker
 go 1.19
 
 require (
-	github.com/Jeffail/gabs/v2 v2.6.1
+	github.com/Jeffail/gabs/v2 v2.7.0
 	github.com/avast/retry-go v3.0.0+incompatible
 	github.com/docker/docker v20.10.23+incompatible
 	github.com/go-resty/resty/v2 v2.7.0
