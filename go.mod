@@ -5,14 +5,14 @@ go 1.19
 require (
 	github.com/Jeffail/gabs/v2 v2.7.0
 	github.com/avast/retry-go v3.0.0+incompatible
-	github.com/docker/docker v20.10.23+incompatible
+	github.com/docker/docker v23.0.0+incompatible
 	github.com/go-resty/resty/v2 v2.7.0
 	github.com/josegonzalez/cli-skeleton v0.7.0
 	github.com/mitchellh/cli v1.1.5
 	github.com/moby/moby v20.10.23+incompatible
 	github.com/posener/complete v1.2.3
 	github.com/spf13/pflag v1.0.5
-	github.com/testcontainers/testcontainers-go v0.17.0
+	github.com/testcontainers/testcontainers-go v0.18.0
 )
 
 require (
@@ -43,7 +43,6 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rs/zerolog v1.28.0 // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
-	github.com/sirupsen/logrus v1.9.0 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
 	golang.org/x/crypto v0.0.0-20221012134737-56aed061732a // indirect
 	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
