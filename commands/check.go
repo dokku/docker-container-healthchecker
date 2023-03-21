@@ -247,6 +247,9 @@ func (c *CheckCommand) processHealthcheck(healthcheck appjson.Healthcheck, conta
 		if len(b) > 0 {
 			logger.Error(fmt.Sprintf("Error for healthcheck name='%s', output: %s", healthcheck.GetName(), strings.TrimSpace(string(b))))
 		}
+		if err := healthcheck.HandleFailure(errs); err != nil {
+			logger.Error(fmt.Sprintf("Error in HandleFailure: %s", err))
+		}
 
 		return HealthcheckResponse{
 			HealthcheckName: healthcheck.GetName(),

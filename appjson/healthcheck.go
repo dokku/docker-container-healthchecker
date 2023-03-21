@@ -8,6 +8,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
+	"os/exec"
 	"strings"
 	"time"
 
@@ -25,16 +27,23 @@ type AppJSON struct {
 }
 
 type Healthcheck struct {
-	Attempts     int      `json:"attempts,omitempty"`
-	Command      []string `json:"command,omitempty"`
-	Content      string   `json:"content,omitempty"`
-	InitialDelay int      `json:"initialDelay,omitempty"`
-	Name         string   `json:"name,omitempty"`
-	Path         string   `json:"path,omitempty"`
-	Timeout      int      `json:"timeout,omitempty"`
-	Type         string   `json:"type,omitempty"`
-	Uptime       int      `json:"uptime,omitempty"`
-	Wait         int      `json:"wait,omitempty"`
+	Attempts     int        `json:"attempts,omitempty"`
+	Command      []string   `json:"command,omitempty"`
+	Content      string     `json:"content,omitempty"`
+	InitialDelay int        `json:"initialDelay,omitempty"`
+	Name         string     `json:"name,omitempty"`
+	Path         string     `json:"path,omitempty"`
+	Timeout      int        `json:"timeout,omitempty"`
+	Type         string     `json:"type,omitempty"`
+	Uptime       int        `json:"uptime,omitempty"`
+	Wait         int        `json:"wait,omitempty"`
+	OnFailure    *OnFailure `json:"onFailure,omitempty"`
+}
+
+type OnFailure struct {
+	Command       []string `json:"command,omitempty"`
+	Url           string   `json:"url,omitempty"`
+	OnNonzeroExit bool     `json:"onNonzeroExit,omitempty"`
 }
 
 type HealthcheckContext struct {
@@ -127,6 +136,37 @@ func (h Healthcheck) Execute(container types.ContainerJSON, ctx HealthcheckConte
 	}
 
 	return h.executeUptimeCheck(container)
+}
+
+func (h Healthcheck) HandleFailure(errors []error) error {
+	if h.OnFailure == nil {
+		return nil
+	}
+	if len(h.OnFailure.Command) > 0 {
+		cmd := exec.Command(h.OnFailure.Command[0], h.OnFailure.Command[1:]...)
+		if err := cmd.Run(); err != nil {
+			return fmt.Errorf("failed to execute on failure command: %s", err)
+		}
+	}
+	if len(h.OnFailure.Url) > 0 {
+		data := map[string]interface{}{
+			"healthcheck_name": h.GetName(),
+			"errors":           errors,
+		}
+		json_data, err := json.Marshal(data)
+		if err != nil {
+			return fmt.Errorf("failed to encode data as JSON: %s", err)
+		}
+		response, err := http.Post(h.OnFailure.Url, "application/json", bytes.NewBuffer(json_data))
+		if err != nil {
+			return fmt.Errorf("failed to send data to URL: %s", err)
+		}
+		defer response.Body.Close()
+		if response.StatusCode != http.StatusOK {
+			return fmt.Errorf("post request failed with status: %s", response.Status)
+		}
+	}
+	return nil
 }
 
 func (h Healthcheck) executeCommandCheck(container types.ContainerJSON) ([]byte, []error) {
