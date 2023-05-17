@@ -5,7 +5,7 @@ go 1.19
 require (
 	github.com/Jeffail/gabs/v2 v2.7.0
 	github.com/avast/retry-go v3.0.0+incompatible
-	github.com/docker/docker v23.0.6+incompatible
+	github.com/docker/docker v24.0.0+incompatible
 	github.com/go-resty/resty/v2 v2.7.0
 	github.com/josegonzalez/cli-skeleton v0.7.0
 	github.com/mitchellh/cli v1.1.5
