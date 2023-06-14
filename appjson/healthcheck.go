@@ -41,9 +41,8 @@ type Healthcheck struct {
 }
 
 type OnFailure struct {
-	Command       []string `json:"command,omitempty"`
-	Url           string   `json:"url,omitempty"`
-	OnNonzeroExit bool     `json:"onNonzeroExit,omitempty"`
+	Command []string `json:"command,omitempty"`
+	Url     string   `json:"url,omitempty"`
 }
 
 type HealthcheckContext struct {
