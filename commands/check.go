@@ -114,14 +114,12 @@ func (c *CheckCommand) Run(args []string) int {
 		return 1
 	}
 
-	logger.LogHeader2(fmt.Sprintf("Reading app.json file from %s", c.appJSONFile))
 	b, err := os.ReadFile(c.appJSONFile)
 	if err != nil {
 		logger.Error(err.Error())
 		return 1
 	}
 
-	logger.Info("Parsing app.json data")
 	var appJSON appjson.AppJSON
 	if err := json.Unmarshal(b, &appJSON); err != nil {
 		logger.Error(err.Error())
@@ -129,7 +127,6 @@ func (c *CheckCommand) Run(args []string) int {
 	}
 
 	containerIDorName := arguments["container-id"].StringValue()
-	logger.Info(fmt.Sprintf("Fetching container %s", containerIDorName))
 	cli, err := client.NewClientWithOpts(
 		client.FromEnv,
 		client.WithAPIVersionNegotiation(),
@@ -179,6 +176,7 @@ func (c *CheckCommand) Run(args []string) int {
 		})
 	}
 
+	logger.LogHeader2(fmt.Sprintf("Executing %d healthchecks", len(healthchecks)))
 	var wg sync.WaitGroup
 	responseChan := make(chan HealthcheckResponse)
 	for _, healthcheck := range healthchecks {
