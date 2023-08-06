@@ -16,6 +16,14 @@ teardown_file() {
   make clean
 }
 
+setup() {
+  rm -f app.json >/dev/null || true
+}
+
+teardown() {
+  rm -f app.json >/dev/null || true
+}
+
 @test "[check] uptime check" {
   echo '{"healthchecks":{"web":[{"name":"uptime check","type":"startup","uptime":5}]}}' >app.json
 
@@ -83,6 +91,25 @@ teardown_file() {
   echo "status: $status"
   [[ "$status" -eq 0 ]]
   [[ "$output" == '{"healthchecks":{"worker":[{"name":"default","type":"startup","uptime":10}]}}' ]]
+}
+
+@test "[add] existing" {
+  echo '{"healthchecks":{"web":[{"name":"existing uptime check","type":"startup","uptime":5}]}}' >app.json
+
+  run "$BIN_NAME" add --uptime 10
+  echo "output: $output"
+  echo "status: $status"
+  [[ "$status" -eq 0 ]]
+  [[ "$output" == '{"healthchecks":{"web":[{"name":"existing uptime check","type":"startup","uptime":5},{"name":"default","type":"startup","uptime":10}]}}' ]]
+}
+
+@test "[add] existing if-empty" {
+  echo '{"healthchecks":{"web":[{"name":"existing uptime check","type":"startup","uptime":5}]}}' >app.json
+  run "$BIN_NAME" add --if-empty --uptime 10
+  echo "output: $output"
+  echo "status: $status"
+  [[ "$status" -eq 0 ]]
+  [[ "$output" == '{"healthchecks":{"web":[{"name":"existing uptime check","type":"startup","uptime":5}]}}' ]]
 }
 
 @test "[convert] checks-root" {
