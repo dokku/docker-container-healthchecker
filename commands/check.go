@@ -194,10 +194,10 @@ func (c *CheckCommand) Run(args []string) int {
 		close(responseChan)
 	}()
 
-	hasErrors := false
+	errorCount := 0
 	for resp := range responseChan {
+		errorCount += len(resp.Errors)
 		if len(resp.Errors) > 0 {
-			hasErrors = true
 			err := resp.Errors[len(resp.Errors)-1]
 			logger.Error(fmt.Sprintf("Failure in name='%s': %s", resp.HealthcheckName, err.Error()))
 		} else {
@@ -205,11 +205,7 @@ func (c *CheckCommand) Run(args []string) int {
 		}
 	}
 
-	if hasErrors {
-		return 1
-	}
-
-	return 0
+	return errorCount
 }
 
 type HealthcheckResponse struct {
