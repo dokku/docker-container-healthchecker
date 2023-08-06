@@ -16,13 +16,13 @@ teardown_file() {
   echo "output: $output"
   echo "status: $status"
   [[ "$status" -eq 0 ]]
-  [[ "$output" == '{"healthchecks":{"web":[{"name":"default","type":"uptime","uptime":1}]}}' ]]
+  [[ "$output" == '{"healthchecks":{"web":[{"name":"default","type":"startup","uptime":1}]}}' ]]
 
   run "$BIN_NAME" add
   echo "output: $output"
   echo "status: $status"
   [[ "$status" -eq 0 ]]
-  [[ "$output" == '{"healthchecks":{"web":[{"name":"default","type":"uptime","uptime":1}]}}' ]]
+  [[ "$output" == '{"healthchecks":{"web":[{"name":"default","type":"startup","uptime":1}]}}' ]]
 }
 
 @test "[add] custom uptime" {
@@ -30,7 +30,7 @@ teardown_file() {
   echo "output: $output"
   echo "status: $status"
   [[ "$status" -eq 0 ]]
-  [[ "$output" == '{"healthchecks":{"web":[{"name":"default","type":"uptime","uptime":10}]}}' ]]
+  [[ "$output" == '{"healthchecks":{"web":[{"name":"default","type":"startup","uptime":10}]}}' ]]
 }
 
 @test "[add] custom process-type" {
@@ -38,13 +38,13 @@ teardown_file() {
   echo "output: $output"
   echo "status: $status"
   [[ "$status" -eq 0 ]]
-  [[ "$output" == '{"healthchecks":{"worker":[{"name":"default","type":"uptime","uptime":1}]}}' ]]
+  [[ "$output" == '{"healthchecks":{"worker":[{"name":"default","type":"startup","uptime":1}]}}' ]]
 
   run "$BIN_NAME" add worker --uptime 10
   echo "output: $output"
   echo "status: $status"
   [[ "$status" -eq 0 ]]
-  [[ "$output" == '{"healthchecks":{"worker":[{"name":"default","type":"uptime","uptime":10}]}}' ]]
+  [[ "$output" == '{"healthchecks":{"worker":[{"name":"default","type":"startup","uptime":10}]}}' ]]
 }
 
 @test "[convert] checks-root" {
