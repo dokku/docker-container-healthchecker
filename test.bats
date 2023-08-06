@@ -5,10 +5,48 @@ export BIN_NAME="build/$SYSTEM_NAME/docker-container-healthchecker-amd64"
 
 setup_file() {
   make prebuild $BIN_NAME
+  rm -f app.json >/dev/null || true
+  docker rm -f dch-test-1 >/dev/null || true
+  docker container run -d --platform linux/amd64 --name dch-test-1 dokku/test-app:1 /start web
 }
 
 teardown_file() {
+  docker rm -f dch-test-1 >/dev/null || true
+  rm -f app.json >/dev/null || true
   make clean
+}
+
+@test "[check] uptime check" {
+  echo '{"healthchecks":{"web":[{"name":"uptime check","type":"startup","uptime":5}]}}' >app.json
+
+  run "$BIN_NAME" check dch-test-1
+  echo "output: $output"
+  echo "status: $status"
+  [[ "$status" -eq 0 ]]
+  [[ "$output" =~ "Healthcheck succeeded name='uptime check'" ]]
+  [[ "$output" =~ "Running healthcheck name='uptime check' type='uptime' uptime=5" ]]
+}
+
+@test "[check] path check" {
+  echo '{"healthchecks":{"web":[{"name":"path check","type":"startup","path":"/"}]}}' >app.json
+
+  run "$BIN_NAME" check dch-test-1
+  echo "output: $output"
+  echo "status: $status"
+  [[ "$status" -eq 0 ]]
+  [[ "$output" =~ "Healthcheck succeeded name='path check'" ]]
+  [[ "$output" =~ "Running healthcheck name='path check' delay=0 path='/' retries=2 timeout=5 type='path'" ]]
+}
+
+@test "[check] command check" {
+  echo '{"healthchecks":{"web":[{"command":["echo","hi"],"name":"command check","type":"startup"}]}}' >app.json
+
+  run "$BIN_NAME" check dch-test-1
+  echo "output: $output"
+  echo "status: $status"
+  [[ "$status" -eq 0 ]]
+  [[ "$output" =~ "Healthcheck succeeded name='command check'" ]]
+  [[ "$output" =~ "Running healthcheck name='command check' attempts=3 command='[echo hi]' timeout=5 type='command' wait=5" ]]
 }
 
 @test "[add] default" {
@@ -16,13 +54,13 @@ teardown_file() {
   echo "output: $output"
   echo "status: $status"
   [[ "$status" -eq 0 ]]
-  [[ "$output" == '{"healthchecks":{"web":[{"name":"default","type":"uptime","uptime":1}]}}' ]]
+  [[ "$output" == '{"healthchecks":{"web":[{"name":"default","type":"startup","uptime":1}]}}' ]]
 
   run "$BIN_NAME" add
   echo "output: $output"
   echo "status: $status"
   [[ "$status" -eq 0 ]]
-  [[ "$output" == '{"healthchecks":{"web":[{"name":"default","type":"uptime","uptime":1}]}}' ]]
+  [[ "$output" == '{"healthchecks":{"web":[{"name":"default","type":"startup","uptime":1}]}}' ]]
 }
 
 @test "[add] custom uptime" {
@@ -30,7 +68,7 @@ teardown_file() {
   echo "output: $output"
   echo "status: $status"
   [[ "$status" -eq 0 ]]
-  [[ "$output" == '{"healthchecks":{"web":[{"name":"default","type":"uptime","uptime":10}]}}' ]]
+  [[ "$output" == '{"healthchecks":{"web":[{"name":"default","type":"startup","uptime":10}]}}' ]]
 }
 
 @test "[add] custom process-type" {
@@ -38,13 +76,13 @@ teardown_file() {
   echo "output: $output"
   echo "status: $status"
   [[ "$status" -eq 0 ]]
-  [[ "$output" == '{"healthchecks":{"worker":[{"name":"default","type":"uptime","uptime":1}]}}' ]]
+  [[ "$output" == '{"healthchecks":{"worker":[{"name":"default","type":"startup","uptime":1}]}}' ]]
 
   run "$BIN_NAME" add worker --uptime 10
   echo "output: $output"
   echo "status: $status"
   [[ "$status" -eq 0 ]]
-  [[ "$output" == '{"healthchecks":{"worker":[{"name":"default","type":"uptime","uptime":10}]}}' ]]
+  [[ "$output" == '{"healthchecks":{"worker":[{"name":"default","type":"startup","uptime":10}]}}' ]]
 }
 
 @test "[convert] checks-root" {

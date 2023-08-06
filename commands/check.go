@@ -70,9 +70,9 @@ func (c *CheckCommand) ParsedArguments(args []string) (map[string]command.Argume
 func (c *CheckCommand) FlagSet() *flag.FlagSet {
 	f := c.Meta.FlagSet(c.Name(), command.FlagSetClient)
 	f.IntVar(&c.port, "port", 5000, "container port to check")
-	f.StringSliceVar(&c.headers, "headers", []string{}, "a list of headers to specify for path requests")
+	f.StringSliceVar(&c.headers, "header", []string{}, "one or more headers in 'curl -H' format to specify for path requests")
 	f.StringVar(&c.appJSONFile, "app-json", "app.json", "full path to app.json file")
-	f.StringVar(&c.checkType, "check-type", "startup", "check to interpret")
+	f.StringVar(&c.checkType, "type", "startup", "check to interpret")
 	f.StringVar(&c.networkName, "network", "bridge", "container network to use for http 'path' checks")
 	f.StringVar(&c.processType, "process-type", "web", "process type to check")
 	return f
@@ -83,11 +83,11 @@ func (c *CheckCommand) AutocompleteFlags() complete.Flags {
 		c.Meta.AutocompleteFlags(command.FlagSetClient),
 		complete.Flags{
 			"--app-json":     complete.PredictAnything,
-			"--check-type":   complete.PredictSet("liveness", "readiness", "startup"),
-			"--headers":      complete.PredictAnything,
+			"--header":       complete.PredictAnything,
 			"--network":      complete.PredictAnything,
 			"--port":         complete.PredictAnything,
 			"--process-type": complete.PredictAnything,
+			"--type":         complete.PredictSet("liveness", "readiness", "startup"),
 		},
 	)
 }
@@ -227,7 +227,15 @@ func (c *CheckCommand) processHealthcheck(healthcheck appjson.Healthcheck, conta
 		delay = int(time.Since(tt).Seconds() - float64(healthcheck.GetInitialDelay()))
 	}
 
-	logger.Info(fmt.Sprintf("Running healthcheck name='%s' attempts=%d delay=%d timeout=%d", healthcheck.GetName(), healthcheck.Attempts, healthcheck.GetInitialDelay(), healthcheck.GetTimeout()))
+	switch healthcheck.GetCheckType() {
+	case "command":
+		logger.Info(fmt.Sprintf("Running healthcheck name='%s' attempts=%d command='%s' timeout=%d type='command' wait=%d", healthcheck.GetName(), healthcheck.GetAttempts(), healthcheck.Command, healthcheck.GetTimeout(), healthcheck.GetWait()))
+	case "path":
+		logger.Info(fmt.Sprintf("Running healthcheck name='%s' delay=%d path='%s' retries=%d timeout=%d type='path'", healthcheck.GetName(), healthcheck.GetInitialDelay(), healthcheck.GetPath(), healthcheck.GetRetries(), healthcheck.GetTimeout()))
+	case "uptime":
+		logger.Info(fmt.Sprintf("Running healthcheck name='%s' type='uptime' uptime=%d", healthcheck.GetName(), healthcheck.Uptime))
+	}
+
 	if delay > 0 {
 		time.Sleep(time.Duration(delay) * time.Second)
 	}

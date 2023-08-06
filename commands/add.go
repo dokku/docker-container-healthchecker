@@ -15,6 +15,7 @@ type AddCommand struct {
 	command.Meta
 
 	appJSONFile string
+	checkType   string
 	ifEmpty     bool
 	inPlace     bool
 	prettyPrint bool
@@ -65,6 +66,7 @@ func (c *AddCommand) FlagSet() *flag.FlagSet {
 	f.BoolVar(&c.ifEmpty, "if-empty", false, "only add if there are no healthchecks for the process")
 	f.BoolVar(&c.inPlace, "in-place", false, "modify any app.json file in place")
 	f.StringVar(&c.appJSONFile, "app-json", "", "full path to app.json file to update")
+	f.StringVar(&c.checkType, "type", "startup", "check to interpret")
 	f.IntVar(&c.uptime, "uptime", 1, "amount of time the container should be running for at minimum")
 	return f
 }
@@ -77,6 +79,7 @@ func (c *AddCommand) AutocompleteFlags() complete.Flags {
 			"--if-empty": complete.PredictNothing,
 			"--in-place": complete.PredictNothing,
 			"--pretty":   complete.PredictNothing,
+			"--type":     complete.PredictSet("liveness", "readiness", "startup"),
 			"--uptime":   complete.PredictAnything,
 		},
 	)
@@ -131,7 +134,7 @@ func (c *AddCommand) Run(args []string) int {
 
 	healthcheck := appjson.Healthcheck{
 		Name:   "default",
-		Type:   "uptime",
+		Type:   c.checkType,
 		Uptime: c.uptime,
 	}
 
