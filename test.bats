@@ -11,6 +11,42 @@ teardown_file() {
   make clean
 }
 
+@test "[add] default" {
+  run "$BIN_NAME" add web
+  echo "output: $output"
+  echo "status: $status"
+  [[ "$status" -eq 0 ]]
+  [[ "$output" == '{"healthchecks":{"web":[{"name":"default","type":"uptime","uptime":1}]}}' ]]
+
+  run "$BIN_NAME" add
+  echo "output: $output"
+  echo "status: $status"
+  [[ "$status" -eq 0 ]]
+  [[ "$output" == '{"healthchecks":{"web":[{"name":"default","type":"uptime","uptime":1}]}}' ]]
+}
+
+@test "[add] custom uptime" {
+  run "$BIN_NAME" add --uptime 10
+  echo "output: $output"
+  echo "status: $status"
+  [[ "$status" -eq 0 ]]
+  [[ "$output" == '{"healthchecks":{"web":[{"name":"default","type":"uptime","uptime":10}]}}' ]]
+}
+
+@test "[add] custom process-type" {
+  run "$BIN_NAME" add worker
+  echo "output: $output"
+  echo "status: $status"
+  [[ "$status" -eq 0 ]]
+  [[ "$output" == '{"healthchecks":{"worker":[{"name":"default","type":"uptime","uptime":1}]}}' ]]
+
+  run "$BIN_NAME" add worker --uptime 10
+  echo "output: $output"
+  echo "status: $status"
+  [[ "$status" -eq 0 ]]
+  [[ "$output" == '{"healthchecks":{"worker":[{"name":"default","type":"uptime","uptime":10}]}}' ]]
+}
+
 @test "[convert] checks-root" {
   run "$BIN_NAME" convert tests/fixtures/checks-root.CHECKS
   echo "output: $output"

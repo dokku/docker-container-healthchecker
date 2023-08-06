@@ -39,6 +39,9 @@ func Run(args []string) int {
 // Returns a list of implemented commands
 func Commands(meta command.Meta) map[string]cli.CommandFactory {
 	return map[string]cli.CommandFactory{
+		"add": func() (cli.Command, error) {
+			return &commands.AddCommand{Meta: meta}, nil
+		},
 		"check": func() (cli.Command, error) {
 			return &commands.CheckCommand{Meta: meta}, nil
 		},

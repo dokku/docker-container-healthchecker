@@ -128,4 +128,4 @@ Healthchecks are specified within an `app.json` file grouped in a per process-ty
 }
 ```
 
-An example `app.json` is located in the root of this repository. Unknown keys are ignored, as in the above case with the `description` field.
+An example `app.json` is located in the `tests/fixtures`. Unknown keys are ignored, as in the above case with the `description` field.

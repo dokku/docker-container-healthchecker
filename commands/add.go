@@ -1,7 +1,7 @@
 package commands
 
 import (
-	"docker-container-healthchecker/convert"
+	"docker-container-healthchecker/appjson"
 	"fmt"
 	"os"
 
@@ -11,72 +11,78 @@ import (
 	flag "github.com/spf13/pflag"
 )
 
-type ConvertCommand struct {
+type AddCommand struct {
 	command.Meta
 
 	appJSONFile string
+	ifEmpty     bool
 	inPlace     bool
 	prettyPrint bool
+	uptime      int
 }
 
-func (c *ConvertCommand) Name() string {
-	return "convert"
+func (c *AddCommand) Name() string {
+	return "add"
 }
 
-func (c *ConvertCommand) Synopsis() string {
-	return "Converts a CHECKS file into app.json format"
+func (c *AddCommand) Synopsis() string {
+	return "Adds a healthcheck to a process type"
 }
 
-func (c *ConvertCommand) Help() string {
+func (c *AddCommand) Help() string {
 	return command.CommandHelp(c)
 }
 
-func (c *ConvertCommand) Examples() map[string]string {
+func (c *AddCommand) Examples() map[string]string {
 	appName := os.Getenv("CLI_APP_NAME")
 	return map[string]string{
-		"Convert a file": fmt.Sprintf("%s %s CHECKS", appName, c.Name()),
+		"Add the default healthcheck to the web process type": fmt.Sprintf("%s %s web --if-empty", appName, c.Name()),
 	}
 }
 
-func (c *ConvertCommand) Arguments() []command.Argument {
+func (c *AddCommand) Arguments() []command.Argument {
 	args := []command.Argument{}
 	args = append(args, command.Argument{
-		Name:        "check-file",
-		Description: "path to check file",
-		Optional:    false,
+		Name:        "process-type",
+		Description: "process type to add a check to",
+		Optional:    true,
 		Type:        command.ArgumentString,
 	})
 	return args
 }
 
-func (c *ConvertCommand) AutocompleteArgs() complete.Predictor {
+func (c *AddCommand) AutocompleteArgs() complete.Predictor {
 	return complete.PredictNothing
 }
 
-func (c *ConvertCommand) ParsedArguments(args []string) (map[string]command.Argument, error) {
+func (c *AddCommand) ParsedArguments(args []string) (map[string]command.Argument, error) {
 	return command.ParseArguments(args, c.Arguments())
 }
 
-func (c *ConvertCommand) FlagSet() *flag.FlagSet {
+func (c *AddCommand) FlagSet() *flag.FlagSet {
 	f := c.Meta.FlagSet(c.Name(), command.FlagSetClient)
-	f.BoolVar(&c.inPlace, "in-place", false, "modify any app.json file in place")
 	f.BoolVar(&c.prettyPrint, "pretty", false, "pretty print json output")
-	f.StringVar(&c.appJSONFile, "app-json", "", "full path to app.json file")
+	f.BoolVar(&c.ifEmpty, "if-empty", false, "only add if there are no healthchecks for the process")
+	f.BoolVar(&c.inPlace, "in-place", false, "modify any app.json file in place")
+	f.StringVar(&c.appJSONFile, "app-json", "", "full path to app.json file to update")
+	f.IntVar(&c.uptime, "uptime", 1, "amount of time the container should be running for at minimum")
 	return f
 }
 
-func (c *ConvertCommand) AutocompleteFlags() complete.Flags {
+func (c *AddCommand) AutocompleteFlags() complete.Flags {
 	return command.MergeAutocompleteFlags(
 		c.Meta.AutocompleteFlags(command.FlagSetClient),
 		complete.Flags{
 			"--app-json": complete.PredictAnything,
+			"--if-empty": complete.PredictNothing,
 			"--in-place": complete.PredictNothing,
 			"--pretty":   complete.PredictNothing,
+			"--uptime":   complete.PredictAnything,
 		},
 	)
 }
 
-func (c *ConvertCommand) Run(args []string) int {
+func (c *AddCommand) Run(args []string) int {
 	flags := c.FlagSet()
 	flags.Usage = func() { c.Ui.Output(c.Help()) }
 	if err := flags.Parse(args); err != nil {
@@ -89,18 +95,6 @@ func (c *ConvertCommand) Run(args []string) int {
 	if err != nil {
 		c.Ui.Error(err.Error())
 		c.Ui.Error(command.CommandErrorText(c))
-		return 1
-	}
-
-	data, err := os.ReadFile(arguments["check-file"].StringValue())
-	if err != nil {
-		c.Ui.Error(err.Error())
-		return 1
-	}
-
-	checkFile := convert.New(convert.WithData(data))
-	if err := checkFile.Parse(); err != nil {
-		c.Ui.Error(err.Error())
 		return 1
 	}
 
@@ -124,7 +118,28 @@ func (c *ConvertCommand) Run(args []string) int {
 		return 1
 	}
 
-	parsed.SetP(checkFile.ToHealthchecks(), "healthchecks.web")
+	processType := arguments["process-type"].StringValue()
+	if processType == "" {
+		processType = "web"
+	}
+	path := fmt.Sprintf("healthchecks.%s", processType)
+	exists := parsed.ExistsP(path)
+	length := len(parsed.S(path).Children())
+	if c.ifEmpty && exists && length > 0 {
+		return 0
+	}
+
+	healthcheck := appjson.Healthcheck{
+		Name:   "default",
+		Type:   "uptime",
+		Uptime: c.uptime,
+	}
+
+	if exists && length > 0 {
+		parsed.ArrayAppend(healthcheck, path)
+	} else {
+		parsed.SetP([]appjson.Healthcheck{healthcheck}, path)
+	}
 
 	var b []byte
 	if c.prettyPrint {
