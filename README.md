@@ -33,10 +33,16 @@ By default, the output will be written to stdout. This output can be pretty prin
 docker-container-healthchecker convert path/to/CHECKS --pretty
 ```
 
-An existing `app.json` file can also be updated by specifying the path to an `app.json` file via the `--app-json` flag. If the file does not exist, it will be created. This also respects pretty printing via the `--pretty` flag.
+The `app.json` in the current working directory is used as input. A different `app.json` file can also be updated by specifying the path to an `app.json` file via the `--app-json` flag. If the file does not exist, an error will be raised.
 
 ```shell
-docker-container-healthchecker convert path/to/CHECKS --pretty --app.json path/to/app.json
+docker-container-healthchecker convert path/to/CHECKS --app.json path/to/app.json
+```
+
+The `app.json` file can also be modified in place instead of writing to stdout by specifying the `--in-place` flag. This also respects pretty printing via the `--pretty` flag.
+
+```shell
+docker-container-healthchecker convert path/to/CHECKS --pretty --inline
 ```
 
 ### Check types
