@@ -12,3 +12,5 @@ RUN apt-get update \
 RUN gem install --no-ri --no-rdoc --quiet rake fpm package_cloud
 
 WORKDIR /src
+
+RUN curl -fsSLO https://download.docker.com/linux/static/stable/x86_64/docker-20.10.14.tgz && tar --strip-components=1 -xvzf docker-20.10.14.tgz -C /usr/local/bin
