@@ -227,7 +227,15 @@ func (c *CheckCommand) processHealthcheck(healthcheck appjson.Healthcheck, conta
 		delay = int(time.Since(tt).Seconds() - float64(healthcheck.GetInitialDelay()))
 	}
 
-	logger.Info(fmt.Sprintf("Running healthcheck name='%s' attempts=%d delay=%d timeout=%d", healthcheck.GetName(), healthcheck.Attempts, healthcheck.GetInitialDelay(), healthcheck.GetTimeout()))
+	switch healthcheck.GetCheckType() {
+	case "command":
+		logger.Info(fmt.Sprintf("Running healthcheck name='%s' attempts=%d command='%s' timeout=%d type='command' wait=%d", healthcheck.GetName(), healthcheck.GetAttempts(), healthcheck.Command, healthcheck.GetTimeout(), healthcheck.GetWait()))
+	case "path":
+		logger.Info(fmt.Sprintf("Running healthcheck name='%s' delay=%d path='%s' retries=%d timeout=%d type='path'", healthcheck.GetName(), healthcheck.GetInitialDelay(), healthcheck.GetPath(), healthcheck.GetRetries(), healthcheck.GetTimeout()))
+	case "uptime":
+		logger.Info(fmt.Sprintf("Running healthcheck name='%s' type='uptime' uptime=%d", healthcheck.GetName(), healthcheck.Uptime))
+	}
+
 	if delay > 0 {
 		time.Sleep(time.Duration(delay) * time.Second)
 	}
