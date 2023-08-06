@@ -54,9 +54,10 @@ type OnFailure struct {
 }
 
 type HealthcheckContext struct {
-	Headers []string
-	Network string
-	Port    int
+	Headers   []string
+	IPAddress string
+	Network   string
+	Port      int
 }
 
 func (h Healthcheck) GetAttempts() int {
@@ -280,9 +281,14 @@ func (h Healthcheck) dockerExec(container types.ContainerJSON, cmd []string, opt
 }
 
 func (h Healthcheck) executePathCheck(container types.ContainerJSON, ctx HealthcheckContext) ([]byte, []error) {
-	endpoint, ok := container.NetworkSettings.Networks[ctx.Network]
-	if !ok {
-		return []byte{}, []error{fmt.Errorf("inspect container: container '%s' not connected to network '%s'", container.ID, ctx.Network)}
+	ipAddress := ctx.IPAddress
+	if ipAddress == "" {
+		endpoint, ok := container.NetworkSettings.Networks[ctx.Network]
+		if !ok {
+			return []byte{}, []error{fmt.Errorf("inspect container: container '%s' not connected to network '%s'", container.ID, ctx.Network)}
+		}
+
+		ipAddress = endpoint.IPAddress
 	}
 
 	client := resty.New()
@@ -329,7 +335,7 @@ func (h Healthcheck) executePathCheck(container types.ContainerJSON, ctx Healthc
 
 	request := client.R()
 	resp, err := request.
-		Get(fmt.Sprintf("%s://%s:%d%s", scheme, endpoint.IPAddress, port, h.GetPath()))
+		Get(fmt.Sprintf("%s://%s:%d%s", scheme, ipAddress, port, h.GetPath()))
 	if err != nil {
 		return []byte{}, []error{err}
 	}
