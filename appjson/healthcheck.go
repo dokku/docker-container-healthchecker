@@ -257,6 +257,7 @@ func (h Healthcheck) executePathCheck(container types.ContainerJSON, ctx Healthc
 	}
 
 	client := resty.New()
+	client.RemoveProxy()
 	client.SetLogger(logger.CreateLogger())
 	client.SetRetryCount(h.GetRetries())
 	client.SetRetryWaitTime(time.Duration(h.GetWait()) * time.Second)
