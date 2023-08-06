@@ -27,17 +27,25 @@ type AppJSON struct {
 }
 
 type Healthcheck struct {
-	Attempts     int        `json:"attempts,omitempty"`
-	Command      []string   `json:"command,omitempty"`
-	Content      string     `json:"content,omitempty"`
-	InitialDelay int        `json:"initialDelay,omitempty"`
-	Name         string     `json:"name,omitempty"`
-	Path         string     `json:"path,omitempty"`
-	Timeout      int        `json:"timeout,omitempty"`
-	Type         string     `json:"type,omitempty"`
-	Uptime       int        `json:"uptime,omitempty"`
-	Wait         int        `json:"wait,omitempty"`
-	OnFailure    *OnFailure `json:"onFailure,omitempty"`
+	Attempts     int          `json:"attempts,omitempty"`
+	Command      []string     `json:"command,omitempty"`
+	Content      string       `json:"content,omitempty"`
+	HTTPHeaders  []HTTPHeader `json:"httpHeaders,omitempty"`
+	InitialDelay int          `json:"initialDelay,omitempty"`
+	Name         string       `json:"name,omitempty"`
+	Path         string       `json:"path,omitempty"`
+	Port         int          `json:"port,omitempty"`
+	Scheme       string       `json:"scheme,omitempty"`
+	Timeout      int          `json:"timeout,omitempty"`
+	Type         string       `json:"type,omitempty"`
+	Uptime       int          `json:"uptime,omitempty"`
+	Wait         int          `json:"wait,omitempty"`
+	OnFailure    *OnFailure   `json:"onFailure,omitempty"`
+}
+
+type HTTPHeader struct {
+	Name  string `json:"name,omitempty"`
+	Value string `json:"value,omitempty"`
 }
 
 type OnFailure struct {
@@ -274,8 +282,33 @@ func (h Healthcheck) executePathCheck(container types.ContainerJSON, ctx Healthc
 		client.SetHeader(strings.TrimSpace(parts[0]), strings.TrimSpace(parts[1]))
 	}
 
-	resp, err := client.R().
-		Get(fmt.Sprintf("http://%s:%d%s", endpoint.IPAddress, ctx.Port, h.GetPath()))
+	for _, header := range h.HTTPHeaders {
+		client.SetHeader(header.Name, header.Value)
+	}
+
+	client.SetHeader("Accept", "*/*")
+
+	scheme := strings.ToLower(h.Scheme)
+	if scheme == "" {
+		scheme = "http"
+	}
+
+	validSchemes := map[string]bool{
+		"http":  true,
+		"https": true,
+	}
+	if !validSchemes[scheme] {
+		return []byte{}, []error{errors.New("invalid scheme specified, must be either http or https")}
+	}
+
+	port := ctx.Port
+	if h.Port != 0 {
+		port = h.Port
+	}
+
+	request := client.R()
+	resp, err := request.
+		Get(fmt.Sprintf("%s://%s:%d%s", scheme, endpoint.IPAddress, port, h.GetPath()))
 	if err != nil {
 		return []byte{}, []error{err}
 	}

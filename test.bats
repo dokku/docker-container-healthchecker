@@ -55,6 +55,22 @@ teardown_file() {
   [[ "$output" == '{"healthchecks":{"web":[{"attempts":2,"path":"/"}]}}' ]]
 }
 
+@test "[convert] hostname" {
+  run "$BIN_NAME" convert tests/fixtures/hostname.CHECKS
+  echo "output: $output"
+  echo "status: $status"
+  [[ "$status" -eq 0 ]]
+  [[ "$output" == '{"healthchecks":{"web":[{"attempts":2,"content":"nodejs/express","httpHeaders":[{"name":"Host","value":"example.com"}],"path":"/path","timeout":5,"wait":2}]}}' ]]
+}
+
+@test "[convert] hostname-scheme" {
+  run "$BIN_NAME" convert tests/fixtures/hostname-scheme.CHECKS
+  echo "output: $output"
+  echo "status: $status"
+  [[ "$status" -eq 0 ]]
+  [[ "$output" == '{"healthchecks":{"web":[{"attempts":2,"content":"nodejs/express","httpHeaders":[{"name":"Host","value":"example.com"}],"path":"/path","scheme":"https","timeout":5,"wait":2}]}}' ]]
+}
+
 @test "[convert] dockerfile-app-json-formations" {
   run "$BIN_NAME" convert tests/fixtures/dockerfile-app-json-formations.CHECKS
   echo "output: $output"
