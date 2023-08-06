@@ -105,7 +105,7 @@ func (c *ConvertCommand) Run(args []string) int {
 	}
 
 	contents := []byte("{}")
-	if c.appJSONFile == "" {
+	if c.appJSONFile != "" {
 		if _, err := os.Stat(c.appJSONFile); err != nil {
 			c.Ui.Error(err.Error())
 			return 1
