@@ -17,7 +17,7 @@ After creating an app.json file, execute the healthchecker like so:
 docker-container-healthchecker check cb0ce984f2aa
 ```
 
-By default, the checks specified for the `web` process type are executed. If the process-type has no checks specified, a default `uptime` container check of 10 seconds is performed.
+By default, the checks specified for the `web` process type are executed at the `startup` type level. If the process-type has no checks specified, a default `uptime` container check of 10 seconds is performed.
 
 ### convert command
 

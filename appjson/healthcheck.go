@@ -110,12 +110,8 @@ func (h Healthcheck) GetPath() string {
 }
 
 func (h Healthcheck) GetRetries() int {
-	defaultAttempts := 5
-	if h.Attempts <= 0 {
-		return defaultAttempts - 1
-	}
-
-	return h.Attempts - 1
+	attempts := h.GetAttempts()
+	return attempts - 1
 }
 
 func (h Healthcheck) GetTimeout() int {
@@ -205,16 +201,20 @@ func (h Healthcheck) executeCommandCheck(container types.ContainerJSON) ([]byte,
 			reader, rerr = h.dockerExec(container, h.Command)
 			return rerr
 		},
-		retry.Attempts(uint(h.Attempts)),
+		retry.Attempts(uint(h.GetAttempts())),
 		retry.Delay(time.Duration(h.GetWait())*time.Second),
 	)
+
+	if err != nil {
+		return []byte{}, err.(retry.Error).WrappedErrors()
+	}
 
 	b, berr := io.ReadAll(reader)
 	if berr != nil {
 		return []byte{}, []error{berr}
 	}
 
-	return b, err.(retry.Error).WrappedErrors()
+	return b, nil
 }
 
 func (h Healthcheck) dockerExec(container types.ContainerJSON, cmd []string, options ...tcexec.ProcessOption) (io.Reader, error) {
