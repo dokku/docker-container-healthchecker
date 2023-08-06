@@ -46,6 +46,19 @@ teardown() {
   [[ "$output" =~ "Running healthcheck name='path check' delay=0 path='/' retries=2 timeout=5 type='path'" ]]
 }
 
+@test "[check] path check ip-address" {
+  echo '{"healthchecks":{"web":[{"name":"path check","type":"startup","path":"/"}]}}' >app.json
+
+  IP_ADDRESS="$(docker container inspect --format '{{range $v := .NetworkSettings.Networks}}{{printf "%s" $v.IPAddress}}{{end}}' dch-test-1)"
+
+  run "$BIN_NAME" check dch-test-1 --ip-address "$IP_ADDRESS"
+  echo "output: $output"
+  echo "status: $status"
+  [[ "$status" -eq 0 ]]
+  [[ "$output" =~ "Healthcheck succeeded name='path check'" ]]
+  [[ "$output" =~ "Running healthcheck name='path check' delay=0 path='/' retries=2 timeout=5 type='path'" ]]
+}
+
 @test "[check] command check" {
   echo '{"healthchecks":{"web":[{"command":["echo","hi"],"name":"command check","type":"startup"}]}}' >app.json
 
