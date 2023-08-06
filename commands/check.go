@@ -24,6 +24,7 @@ type CheckCommand struct {
 	appJSONFile string
 	headers     []string
 	checkType   string
+	ipAddress   string
 	networkName string
 	port        int
 	processType string
@@ -73,6 +74,7 @@ func (c *CheckCommand) FlagSet() *flag.FlagSet {
 	f.StringSliceVar(&c.headers, "header", []string{}, "one or more headers in 'curl -H' format to specify for path requests")
 	f.StringVar(&c.appJSONFile, "app-json", "app.json", "full path to app.json file")
 	f.StringVar(&c.checkType, "type", "startup", "check to interpret")
+	f.StringVar(&c.ipAddress, "ip-address", "", "an ip address to use for http 'path' checks")
 	f.StringVar(&c.networkName, "network", "bridge", "container network to use for http 'path' checks")
 	f.StringVar(&c.processType, "process-type", "web", "process type to check")
 	return f
@@ -84,6 +86,7 @@ func (c *CheckCommand) AutocompleteFlags() complete.Flags {
 		complete.Flags{
 			"--app-json":     complete.PredictAnything,
 			"--header":       complete.PredictAnything,
+			"--ip-address":   complete.PredictAnything,
 			"--network":      complete.PredictAnything,
 			"--port":         complete.PredictAnything,
 			"--process-type": complete.PredictAnything,
@@ -239,9 +242,10 @@ func (c *CheckCommand) processHealthcheck(healthcheck appjson.Healthcheck, conta
 	}
 
 	ctx := appjson.HealthcheckContext{
-		Headers: c.headers,
-		Network: c.networkName,
-		Port:    c.port,
+		Headers:   c.headers,
+		IPAddress: c.ipAddress,
+		Network:   c.networkName,
+		Port:      c.port,
 	}
 
 	b, errs := healthcheck.Execute(container, ctx)
