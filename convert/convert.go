@@ -17,8 +17,10 @@ type ChecksFile struct {
 }
 
 type Check struct {
-	Path    string
 	Content string
+	Host    string
+	Path    string
+	Scheme  string
 }
 
 func New(options ...func(*ChecksFile)) *ChecksFile {
@@ -32,12 +34,27 @@ func New(options ...func(*ChecksFile)) *ChecksFile {
 func (s *ChecksFile) ToHealthchecks() []appjson.Healthcheck {
 	var healthchecks []appjson.Healthcheck
 	for _, check := range s.checks {
+		headers := []appjson.HTTPHeader{}
+		if len(check.Host) > 0 {
+			headers = append(headers, appjson.HTTPHeader{
+				Name:  "Host",
+				Value: check.Host,
+			})
+		}
+
+		scheme := ""
+		if check.Scheme != "http" {
+			scheme = check.Scheme
+		}
+
 		healthchecks = append(healthchecks, appjson.Healthcheck{
-			Attempts: s.attempts,
-			Path:     check.Path,
-			Content:  check.Content,
-			Timeout:  s.timeout,
-			Wait:     s.wait,
+			Attempts:    s.attempts,
+			Content:     check.Content,
+			HTTPHeaders: headers,
+			Path:        check.Path,
+			Scheme:      scheme,
+			Timeout:     s.timeout,
+			Wait:        s.wait,
 		})
 	}
 
@@ -49,6 +66,8 @@ func (s *ChecksFile) Parse() error {
 	if err != nil {
 		return fmt.Errorf("unable to parse line regex: %w", err)
 	}
+
+	var re = regexp.MustCompile(`(?mi)^(?:https?:)?(\/\/[^\/\?]+)`)
 
 	for i, line := range strings.Split(string(s.data), "\n") {
 		line := r.FindString(line)
@@ -80,14 +99,36 @@ func (s *ChecksFile) Parse() error {
 			s.wait = value
 		} else {
 			parts := strings.SplitN(line, " ", 2)
+			path := parts[0]
+
+			scheme := "http"
+			if strings.HasPrefix(path, "https://") {
+				scheme = "https"
+				path = strings.TrimPrefix(path, "https:")
+			} else if strings.HasPrefix(path, "http://") {
+				scheme = "http"
+				path = strings.TrimPrefix(path, "http:")
+			}
+
+			hostname := ""
+			if strings.HasPrefix(path, "//") {
+				hostname = strings.TrimPrefix(re.FindString(path), "//")
+				path = string(re.ReplaceAll([]byte(path), []byte("")))
+
+			}
+
 			if len(parts) == 1 {
 				s.checks = append(s.checks, Check{
-					Path: parts[0],
+					Host:   hostname,
+					Path:   path,
+					Scheme: scheme,
 				})
 			} else {
 				s.checks = append(s.checks, Check{
-					Path:    parts[0],
+					Host:    hostname,
 					Content: parts[1],
+					Path:    path,
+					Scheme:  scheme,
 				})
 			}
 		}
