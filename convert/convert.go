@@ -33,7 +33,7 @@ func New(options ...func(*ChecksFile)) *ChecksFile {
 
 func (s *ChecksFile) ToHealthchecks() []appjson.Healthcheck {
 	var healthchecks []appjson.Healthcheck
-	for _, check := range s.checks {
+	for i, check := range s.checks {
 		headers := []appjson.HTTPHeader{}
 		if len(check.Host) > 0 {
 			headers = append(headers, appjson.HTTPHeader{
@@ -51,9 +51,11 @@ func (s *ChecksFile) ToHealthchecks() []appjson.Healthcheck {
 			Attempts:    s.attempts,
 			Content:     check.Content,
 			HTTPHeaders: headers,
+			Name:        fmt.Sprintf("check-%d", i+1),
 			Path:        check.Path,
 			Scheme:      scheme,
 			Timeout:     s.timeout,
+			Type:        "startup",
 			Wait:        s.wait,
 		})
 	}

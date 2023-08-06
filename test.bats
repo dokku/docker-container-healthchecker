@@ -90,7 +90,7 @@ teardown_file() {
   echo "output: $output"
   echo "status: $status"
   [[ "$status" -eq 0 ]]
-  [[ "$output" == '{"healthchecks":{"web":[{"attempts":2,"path":"/"}]}}' ]]
+  [[ "$output" == '{"healthchecks":{"web":[{"attempts":2,"name":"check-1","path":"/","type":"startup"}]}}' ]]
 }
 
 @test "[convert] hostname" {
@@ -98,7 +98,7 @@ teardown_file() {
   echo "output: $output"
   echo "status: $status"
   [[ "$status" -eq 0 ]]
-  [[ "$output" == '{"healthchecks":{"web":[{"attempts":2,"content":"nodejs/express","httpHeaders":[{"name":"Host","value":"example.com"}],"path":"/path","timeout":5,"wait":2}]}}' ]]
+  [[ "$output" == '{"healthchecks":{"web":[{"attempts":2,"content":"nodejs/express","httpHeaders":[{"name":"Host","value":"example.com"}],"name":"check-1","path":"/path","timeout":5,"type":"startup","wait":2}]}}' ]]
 }
 
 @test "[convert] hostname-scheme" {
@@ -106,7 +106,7 @@ teardown_file() {
   echo "output: $output"
   echo "status: $status"
   [[ "$status" -eq 0 ]]
-  [[ "$output" == '{"healthchecks":{"web":[{"attempts":2,"content":"nodejs/express","httpHeaders":[{"name":"Host","value":"example.com"}],"path":"/path","scheme":"https","timeout":5,"wait":2}]}}' ]]
+  [[ "$output" == '{"healthchecks":{"web":[{"attempts":2,"content":"nodejs/express","httpHeaders":[{"name":"Host","value":"example.com"}],"name":"check-1","path":"/path","scheme":"https","timeout":5,"type":"startup","wait":2}]}}' ]]
 }
 
 @test "[convert] dockerfile-app-json-formations" {
@@ -114,7 +114,7 @@ teardown_file() {
   echo "output: $output"
   echo "status: $status"
   [[ "$status" -eq 0 ]]
-  [[ "$output" == '{"healthchecks":{"web":[{"attempts":2,"content":"nodejs/express","path":"/","timeout":5,"wait":2}]}}' ]]
+  [[ "$output" == '{"healthchecks":{"web":[{"attempts":2,"content":"nodejs/express","name":"check-1","path":"/","timeout":5,"type":"startup","wait":2}]}}' ]]
 }
 
 @test "[convert] dockerfile-noexpose" {
@@ -122,7 +122,7 @@ teardown_file() {
   echo "output: $output"
   echo "status: $status"
   [[ "$status" -eq 0 ]]
-  [[ "$output" == '{"healthchecks":{"web":[{"attempts":2,"content":"Hello World!","path":"/","timeout":5,"wait":2}]}}' ]]
+  [[ "$output" == '{"healthchecks":{"web":[{"attempts":2,"content":"Hello World!","name":"check-1","path":"/","timeout":5,"type":"startup","wait":2}]}}' ]]
 }
 
 @test "[convert] dockerfile-procfile-bad" {
@@ -130,7 +130,7 @@ teardown_file() {
   echo "output: $output"
   echo "status: $status"
   [[ "$status" -eq 0 ]]
-  [[ "$output" == '{"healthchecks":{"web":[{"attempts":2,"content":"nodejs/express","path":"/","timeout":5,"wait":2}]}}' ]]
+  [[ "$output" == '{"healthchecks":{"web":[{"attempts":2,"content":"nodejs/express","name":"check-1","path":"/","timeout":5,"type":"startup","wait":2}]}}' ]]
 }
 
 @test "[convert] dockerfile-procfile" {
@@ -138,7 +138,7 @@ teardown_file() {
   echo "output: $output"
   echo "status: $status"
   [[ "$status" -eq 0 ]]
-  [[ "$output" == '{"healthchecks":{"web":[{"attempts":2,"content":"nodejs/express","path":"/","timeout":5,"wait":2}]}}' ]]
+  [[ "$output" == '{"healthchecks":{"web":[{"attempts":2,"content":"nodejs/express","name":"check-1","path":"/","timeout":5,"type":"startup","wait":2}]}}' ]]
 }
 
 @test "[convert] dockerfile" {
@@ -146,7 +146,7 @@ teardown_file() {
   echo "output: $output"
   echo "status: $status"
   [[ "$status" -eq 0 ]]
-  [[ "$output" == '{"healthchecks":{"web":[{"attempts":2,"content":"Hello World!","path":"/","timeout":5,"wait":2}]}}' ]]
+  [[ "$output" == '{"healthchecks":{"web":[{"attempts":2,"content":"Hello World!","name":"check-1","path":"/","timeout":5,"type":"startup","wait":2}]}}' ]]
 }
 
 @test "[convert] gitsubmodules" {
@@ -154,7 +154,7 @@ teardown_file() {
   echo "output: $output"
   echo "status: $status"
   [[ "$status" -eq 0 ]]
-  [[ "$output" == '{"healthchecks":{"web":[{"content":"Hello","path":"/"}]}}' ]]
+  [[ "$output" == '{"healthchecks":{"web":[{"content":"Hello","name":"check-1","path":"/","type":"startup"}]}}' ]]
 }
 
 @test "[convert] go-fail-postdeploy" {
@@ -162,7 +162,7 @@ teardown_file() {
   echo "output: $output"
   echo "status: $status"
   [[ "$status" -eq 0 ]]
-  [[ "$output" == '{"healthchecks":{"web":[{"content":"go","path":"/"}]}}' ]]
+  [[ "$output" == '{"healthchecks":{"web":[{"content":"go","name":"check-1","path":"/","type":"startup"}]}}' ]]
 }
 
 @test "[convert] go-fail-predeploy" {
@@ -170,7 +170,7 @@ teardown_file() {
   echo "output: $output"
   echo "status: $status"
   [[ "$status" -eq 0 ]]
-  [[ "$output" == '{"healthchecks":{"web":[{"content":"go","path":"/"}]}}' ]]
+  [[ "$output" == '{"healthchecks":{"web":[{"content":"go","name":"check-1","path":"/","type":"startup"}]}}' ]]
 }
 
 @test "[convert] go" {
@@ -178,7 +178,7 @@ teardown_file() {
   echo "output: $output"
   echo "status: $status"
   [[ "$status" -eq 0 ]]
-  [[ "$output" == '{"healthchecks":{"web":[{"content":"go","path":"/"}]}}' ]]
+  [[ "$output" == '{"healthchecks":{"web":[{"content":"go","name":"check-1","path":"/","type":"startup"}]}}' ]]
 }
 
 @test "[convert] java" {
@@ -186,7 +186,7 @@ teardown_file() {
   echo "output: $output"
   echo "status: $status"
   [[ "$status" -eq 0 ]]
-  [[ "$output" == '{"healthchecks":{"web":[{"content":"Hello from Java","path":"/"}]}}' ]]
+  [[ "$output" == '{"healthchecks":{"web":[{"content":"Hello from Java","name":"check-1","path":"/","type":"startup"}]}}' ]]
 }
 
 @test "[convert] multi" {
@@ -194,7 +194,7 @@ teardown_file() {
   echo "output: $output"
   echo "status: $status"
   [[ "$status" -eq 0 ]]
-  [[ "$output" == '{"healthchecks":{"web":[{"content":"Heroku Multi Buildpack on Dokku","path":"/"}]}}' ]]
+  [[ "$output" == '{"healthchecks":{"web":[{"content":"Heroku Multi Buildpack on Dokku","name":"check-1","path":"/","type":"startup"}]}}' ]]
 }
 
 @test "[convert] nodejs-express-noappjson" {
@@ -202,7 +202,7 @@ teardown_file() {
   echo "output: $output"
   echo "status: $status"
   [[ "$status" -eq 0 ]]
-  [[ "$output" == '{"healthchecks":{"web":[{"attempts":2,"content":"nodejs/express","path":"/","timeout":5,"wait":2}]}}' ]]
+  [[ "$output" == '{"healthchecks":{"web":[{"attempts":2,"content":"nodejs/express","name":"check-1","path":"/","timeout":5,"type":"startup","wait":2}]}}' ]]
 }
 
 @test "[convert] nodejs-express-noprocfile" {
@@ -210,7 +210,7 @@ teardown_file() {
   echo "output: $output"
   echo "status: $status"
   [[ "$status" -eq 0 ]]
-  [[ "$output" == '{"healthchecks":{"web":[{"content":"nodejs/express","path":"/"}]}}' ]]
+  [[ "$output" == '{"healthchecks":{"web":[{"content":"nodejs/express","name":"check-1","path":"/","type":"startup"}]}}' ]]
 }
 
 @test "[convert] php" {
@@ -218,7 +218,7 @@ teardown_file() {
   echo "output: $output"
   echo "status: $status"
   [[ "$status" -eq 0 ]]
-  [[ "$output" == '{"healthchecks":{"web":[{"content":"\u003chtml\u003e\u003ch3\u003ephp\u003c/h3\u003e\u003c/html\u003e","path":"/"}]}}' ]]
+  [[ "$output" == '{"healthchecks":{"web":[{"content":"\u003chtml\u003e\u003ch3\u003ephp\u003c/h3\u003e\u003c/html\u003e","name":"check-1","path":"/","type":"startup"}]}}' ]]
 }
 
 @test "[convert] python-flask" {
@@ -226,7 +226,7 @@ teardown_file() {
   echo "output: $output"
   echo "status: $status"
   [[ "$status" -eq 0 ]]
-  [[ "$output" == '{"healthchecks":{"web":[{"content":"python/flask","path":"/"}]}}' ]]
+  [[ "$output" == '{"healthchecks":{"web":[{"content":"python/flask","name":"check-1","path":"/","type":"startup"}]}}' ]]
 }
 
 @test "[convert] python" {
@@ -234,7 +234,7 @@ teardown_file() {
   echo "output: $output"
   echo "status: $status"
   [[ "$status" -eq 0 ]]
-  [[ "$output" == '{"healthchecks":{"web":[{"attempts":2,"content":"python/http.server","path":"/","timeout":7,"wait":2}]}}' ]]
+  [[ "$output" == '{"healthchecks":{"web":[{"attempts":2,"content":"python/http.server","name":"check-1","path":"/","timeout":7,"type":"startup","wait":2}]}}' ]]
 }
 
 @test "[convert] ruby" {
@@ -242,7 +242,7 @@ teardown_file() {
   echo "output: $output"
   echo "status: $status"
   [[ "$status" -eq 0 ]]
-  [[ "$output" == '{"healthchecks":{"web":[{"content":"Hello, world","path":"/"}]}}' ]]
+  [[ "$output" == '{"healthchecks":{"web":[{"content":"Hello, world","name":"check-1","path":"/","type":"startup"}]}}' ]]
 }
 
 @test "[convert] static" {
@@ -250,7 +250,7 @@ teardown_file() {
   echo "output: $output"
   echo "status: $status"
   [[ "$status" -eq 0 ]]
-  [[ "$output" == '{"healthchecks":{"web":[{"content":"Static Page","path":"/"}]}}' ]]
+  [[ "$output" == '{"healthchecks":{"web":[{"content":"Static Page","name":"check-1","path":"/","type":"startup"}]}}' ]]
 }
 
 @test "[convert] zombies" {
@@ -258,7 +258,7 @@ teardown_file() {
   echo "output: $output"
   echo "status: $status"
   [[ "$status" -eq 0 ]]
-  [[ "$output" == '{"healthchecks":{"web":[{"content":"go","path":"/"}]}}' ]]
+  [[ "$output" == '{"healthchecks":{"web":[{"content":"go","name":"check-1","path":"/","type":"startup"}]}}' ]]
 }
 
 @test "[convert] zombies-dockerfile-no-tini" {
@@ -266,7 +266,7 @@ teardown_file() {
   echo "output: $output"
   echo "status: $status"
   [[ "$status" -eq 0 ]]
-  [[ "$output" == '{"healthchecks":{"web":[{"content":"go","path":"/"}]}}' ]]
+  [[ "$output" == '{"healthchecks":{"web":[{"content":"go","name":"check-1","path":"/","type":"startup"}]}}' ]]
 }
 
 @test "[convert] zombies-dockerfile-tini" {
@@ -274,5 +274,5 @@ teardown_file() {
   echo "output: $output"
   echo "status: $status"
   [[ "$status" -eq 0 ]]
-  [[ "$output" == '{"healthchecks":{"web":[{"content":"go","path":"/"}]}}' ]]
+  [[ "$output" == '{"healthchecks":{"web":[{"content":"go","name":"check-1","path":"/","type":"startup"}]}}' ]]
 }
