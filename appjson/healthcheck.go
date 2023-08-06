@@ -59,6 +59,27 @@ type HealthcheckContext struct {
 	Port    int
 }
 
+func (h Healthcheck) GetAttempts() int {
+	defaultAttempts := 3
+	if h.Attempts <= 0 {
+		return defaultAttempts
+	}
+
+	return h.Attempts
+}
+
+func (h Healthcheck) GetCheckType() string {
+	if len(h.Command) > 0 {
+		return "command"
+	}
+
+	if h.Path != "" {
+		return "path"
+	}
+
+	return "uptime"
+}
+
 func (h Healthcheck) GetInitialDelay() int {
 	if h.InitialDelay <= 0 {
 		return 0
