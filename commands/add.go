@@ -65,7 +65,7 @@ func (c *AddCommand) FlagSet() *flag.FlagSet {
 	f.BoolVar(&c.prettyPrint, "pretty", false, "pretty print json output")
 	f.BoolVar(&c.ifEmpty, "if-empty", false, "only add if there are no healthchecks for the process")
 	f.BoolVar(&c.inPlace, "in-place", false, "modify any app.json file in place")
-	f.StringVar(&c.appJSONFile, "app-json", "", "full path to app.json file to update")
+	f.StringVar(&c.appJSONFile, "app-json", "app.json", "full path to app.json file to update")
 	f.StringVar(&c.checkType, "type", "startup", "check to interpret")
 	f.IntVar(&c.uptime, "uptime", 1, "amount of time the container should be running for at minimum")
 	return f
@@ -103,15 +103,12 @@ func (c *AddCommand) Run(args []string) int {
 
 	contents := []byte("{}")
 	if c.appJSONFile != "" {
-		if _, err := os.Stat(c.appJSONFile); err != nil {
-			c.Ui.Error(err.Error())
-			return 1
-		}
-
-		contents, err = os.ReadFile(c.appJSONFile)
-		if err != nil {
-			c.Ui.Error(err.Error())
-			return 1
+		if _, err := os.Stat(c.appJSONFile); err == nil {
+			contents, err = os.ReadFile(c.appJSONFile)
+			if err != nil {
+				c.Ui.Error(err.Error())
+				return 1
+			}
 		}
 	}
 
@@ -127,8 +124,16 @@ func (c *AddCommand) Run(args []string) int {
 	}
 	path := fmt.Sprintf("healthchecks.%s", processType)
 	exists := parsed.ExistsP(path)
-	length := len(parsed.S(path).Children())
+	length := len(parsed.Path(path).Children())
 	if c.ifEmpty && exists && length > 0 {
+		var b []byte
+		if c.prettyPrint {
+			b = parsed.BytesIndent("", "  ")
+		} else {
+			b = parsed.Bytes()
+		}
+
+		fmt.Println(string(b))
 		return 0
 	}
 
@@ -139,7 +144,7 @@ func (c *AddCommand) Run(args []string) int {
 	}
 
 	if exists && length > 0 {
-		parsed.ArrayAppend(healthcheck, path)
+		parsed.ArrayAppend(healthcheck, "healthchecks", processType)
 	} else {
 		parsed.SetP([]appjson.Healthcheck{healthcheck}, path)
 	}
