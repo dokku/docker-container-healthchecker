@@ -1,9 +1,7 @@
 package commands
 
 import (
-	"docker-container-healthchecker/appjson"
 	"docker-container-healthchecker/convert"
-	"encoding/json"
 	"fmt"
 	"os"
 
@@ -17,6 +15,7 @@ type ConvertCommand struct {
 	command.Meta
 
 	appJSONFile string
+	inPlace     bool
 	prettyPrint bool
 }
 
@@ -60,8 +59,9 @@ func (c *ConvertCommand) ParsedArguments(args []string) (map[string]command.Argu
 
 func (c *ConvertCommand) FlagSet() *flag.FlagSet {
 	f := c.Meta.FlagSet(c.Name(), command.FlagSetClient)
+	f.BoolVar(&c.inPlace, "in-place", false, "modify any app.json file in place")
 	f.BoolVar(&c.prettyPrint, "pretty", false, "pretty print json output")
-	f.StringVar(&c.appJSONFile, "app-json", "", "full path to app.json file to update")
+	f.StringVar(&c.appJSONFile, "app-json", "app.json", "full path to app.json file")
 	return f
 }
 
@@ -70,6 +70,7 @@ func (c *ConvertCommand) AutocompleteFlags() complete.Flags {
 		c.Meta.AutocompleteFlags(command.FlagSetClient),
 		complete.Flags{
 			"--app-json": complete.PredictAnything,
+			"--in-place": complete.PredictAnything,
 			"--pretty":   complete.PredictNothing,
 		},
 	)
@@ -103,56 +104,45 @@ func (c *ConvertCommand) Run(args []string) int {
 		return 1
 	}
 
-	healthchecks := checkFile.ToHealthchecks()
+	contents := []byte("{}")
 	if c.appJSONFile == "" {
-		output := appjson.AppJSON{
-			Healthchecks: map[string][]appjson.Healthcheck{
-				"web": healthchecks,
-			},
-		}
-
-		var b []byte
-		if c.prettyPrint {
-			b, err = json.MarshalIndent(output, "", "    ")
-		} else {
-			b, err = json.Marshal(output)
-		}
-
-		if err != nil {
+		if _, err := os.Stat(c.appJSONFile); err != nil {
 			c.Ui.Error(err.Error())
 			return 1
 		}
 
-		fmt.Println(string(b))
-	} else {
-		contents := []byte("{}")
-		if _, err := os.Stat(c.appJSONFile); err == nil {
-			contents, err = os.ReadFile(c.appJSONFile)
-			if err != nil {
-				c.Ui.Error(err.Error())
-				return 1
-			}
-		}
-
-		parsed, err := gabs.ParseJSON(contents)
-		if err != nil {
-			c.Ui.Error(err.Error())
-			return 1
-		}
-
-		parsed.SetP(healthchecks, "healthchecks.web")
-
-		if c.prettyPrint {
-			err = os.WriteFile(c.appJSONFile, parsed.BytesIndent("", "  "), 0644)
-		} else {
-			err = os.WriteFile(c.appJSONFile, parsed.Bytes(), 0644)
-		}
-
+		contents, err = os.ReadFile(c.appJSONFile)
 		if err != nil {
 			c.Ui.Error(err.Error())
 			return 1
 		}
 	}
+
+	parsed, err := gabs.ParseJSON(contents)
+	if err != nil {
+		c.Ui.Error(err.Error())
+		return 1
+	}
+
+	parsed.SetP(checkFile.ToHealthchecks(), "healthchecks.web")
+
+	var b []byte
+	if c.prettyPrint {
+		b = parsed.BytesIndent("", "  ")
+	} else {
+		b = parsed.Bytes()
+	}
+
+	if c.inPlace {
+		if err := os.WriteFile(c.appJSONFile, b, 0644); err != nil {
+			c.Ui.Error(err.Error())
+			return 1
+		}
+
+		return 0
+	}
+
+	fmt.Println(string(b))
 
 	return 0
 }
