@@ -24,6 +24,125 @@ teardown() {
   rm -f app.json >/dev/null || true
 }
 
+@test "[add] default" {
+  run "$BIN_NAME" add web
+  echo "output: $output"
+  echo "status: $status"
+  [[ "$status" -eq 0 ]]
+  [[ "$output" == '{"healthchecks":{"web":[{"name":"default","type":"startup","uptime":1}]}}' ]]
+
+  run "$BIN_NAME" add
+  echo "output: $output"
+  echo "status: $status"
+  [[ "$status" -eq 0 ]]
+  [[ "$output" == '{"healthchecks":{"web":[{"name":"default","type":"startup","uptime":1}]}}' ]]
+}
+
+@test "[add] default in-place" {
+  run "$BIN_NAME" add web --in-place
+  echo "output: $output"
+  echo "status: $status"
+  [[ "$status" -eq 0 ]]
+  [[ "$output" == '' ]]
+
+  run cat app.json
+  echo "output: $output"
+  echo "status: $status"
+  [[ "$status" -eq 0 ]]
+  [[ "$output" == '{"healthchecks":{"web":[{"name":"default","type":"startup","uptime":1}]}}' ]]
+}
+
+@test "[add] default in-place existing" {
+  run "$BIN_NAME" add web --in-place
+  echo "output: $output"
+  echo "status: $status"
+  [[ "$status" -eq 0 ]]
+  [[ "$output" == '' ]]
+
+  run cat app.json
+  echo "output: $output"
+  echo "status: $status"
+  [[ "$status" -eq 0 ]]
+  [[ "$output" == '{"healthchecks":{"web":[{"name":"default","type":"startup","uptime":1}]}}' ]]
+
+  run "$BIN_NAME" add web --if-empty --in-place
+  echo "output: $output"
+  echo "status: $status"
+  [[ "$status" -eq 0 ]]
+  [[ "$output" == '' ]]
+
+  run cat app.json
+  echo "output: $output"
+  echo "status: $status"
+  [[ "$status" -eq 0 ]]
+  [[ "$output" == '{"healthchecks":{"web":[{"name":"default","type":"startup","uptime":1}]}}' ]]
+
+  run "$BIN_NAME" add web --in-place --uptime 2
+  echo "output: $output"
+  echo "status: $status"
+  [[ "$status" -eq 0 ]]
+  [[ "$output" == '' ]]
+
+  run cat app.json
+  echo "output: $output"
+  echo "status: $status"
+  [[ "$status" -eq 0 ]]
+  [[ "$output" == '{"healthchecks":{"web":[{"name":"default","type":"startup","uptime":1},{"name":"default","type":"startup","uptime":2}]}}' ]]
+
+  run "$BIN_NAME" add web --if-empty --in-place --uptime 2
+  echo "output: $output"
+  echo "status: $status"
+  [[ "$status" -eq 0 ]]
+  [[ "$output" == '' ]]
+
+  run cat app.json
+  echo "output: $output"
+  echo "status: $status"
+  [[ "$status" -eq 0 ]]
+  [[ "$output" == '{"healthchecks":{"web":[{"name":"default","type":"startup","uptime":1},{"name":"default","type":"startup","uptime":2}]}}' ]]
+}
+
+@test "[add] custom uptime" {
+  run "$BIN_NAME" add --uptime 10
+  echo "output: $output"
+  echo "status: $status"
+  [[ "$status" -eq 0 ]]
+  [[ "$output" == '{"healthchecks":{"web":[{"name":"default","type":"startup","uptime":10}]}}' ]]
+}
+
+@test "[add] custom process-type" {
+  run "$BIN_NAME" add worker
+  echo "output: $output"
+  echo "status: $status"
+  [[ "$status" -eq 0 ]]
+  [[ "$output" == '{"healthchecks":{"worker":[{"name":"default","type":"startup","uptime":1}]}}' ]]
+
+  run "$BIN_NAME" add worker --uptime 10
+  echo "output: $output"
+  echo "status: $status"
+  [[ "$status" -eq 0 ]]
+  [[ "$output" == '{"healthchecks":{"worker":[{"name":"default","type":"startup","uptime":10}]}}' ]]
+}
+
+@test "[add] existing" {
+  echo '{"healthchecks":{"web":[{"name":"existing uptime check","type":"startup","uptime":5}]}}' >app.json
+
+  run "$BIN_NAME" add --uptime 10
+  echo "output: $output"
+  echo "status: $status"
+  [[ "$status" -eq 0 ]]
+  [[ "$output" == '{"healthchecks":{"web":[{"name":"existing uptime check","type":"startup","uptime":5},{"name":"default","type":"startup","uptime":10}]}}' ]]
+}
+
+@test "[add] existing if-empty" {
+  echo '{"healthchecks":{"web":[{"name":"existing uptime check","type":"startup","uptime":5}]}}' >app.json
+  run "$BIN_NAME" add --if-empty --uptime 10
+  echo "output: $output"
+  echo "status: $status"
+  [[ "$status" -eq 0 ]]
+  [[ "$output" == '{"healthchecks":{"web":[{"name":"existing uptime check","type":"startup","uptime":5}]}}' ]]
+}
+
 @test "[check] uptime check" {
   echo '{"healthchecks":{"web":[{"name":"uptime check","type":"startup","uptime":5}]}}' >app.json
 
@@ -68,61 +187,6 @@ teardown() {
   [[ "$status" -eq 0 ]]
   [[ "$output" =~ "Healthcheck succeeded name='command check'" ]]
   [[ "$output" =~ "Running healthcheck name='command check' attempts=3 command='[echo hi]' timeout=5 type='command' wait=5" ]]
-}
-
-@test "[add] default" {
-  run "$BIN_NAME" add web
-  echo "output: $output"
-  echo "status: $status"
-  [[ "$status" -eq 0 ]]
-  [[ "$output" == '{"healthchecks":{"web":[{"name":"default","type":"startup","uptime":1}]}}' ]]
-
-  run "$BIN_NAME" add
-  echo "output: $output"
-  echo "status: $status"
-  [[ "$status" -eq 0 ]]
-  [[ "$output" == '{"healthchecks":{"web":[{"name":"default","type":"startup","uptime":1}]}}' ]]
-}
-
-@test "[add] custom uptime" {
-  run "$BIN_NAME" add --uptime 10
-  echo "output: $output"
-  echo "status: $status"
-  [[ "$status" -eq 0 ]]
-  [[ "$output" == '{"healthchecks":{"web":[{"name":"default","type":"startup","uptime":10}]}}' ]]
-}
-
-@test "[add] custom process-type" {
-  run "$BIN_NAME" add worker
-  echo "output: $output"
-  echo "status: $status"
-  [[ "$status" -eq 0 ]]
-  [[ "$output" == '{"healthchecks":{"worker":[{"name":"default","type":"startup","uptime":1}]}}' ]]
-
-  run "$BIN_NAME" add worker --uptime 10
-  echo "output: $output"
-  echo "status: $status"
-  [[ "$status" -eq 0 ]]
-  [[ "$output" == '{"healthchecks":{"worker":[{"name":"default","type":"startup","uptime":10}]}}' ]]
-}
-
-@test "[add] existing" {
-  echo '{"healthchecks":{"web":[{"name":"existing uptime check","type":"startup","uptime":5}]}}' >app.json
-
-  run "$BIN_NAME" add --uptime 10
-  echo "output: $output"
-  echo "status: $status"
-  [[ "$status" -eq 0 ]]
-  [[ "$output" == '{"healthchecks":{"web":[{"name":"existing uptime check","type":"startup","uptime":5},{"name":"default","type":"startup","uptime":10}]}}' ]]
-}
-
-@test "[add] existing if-empty" {
-  echo '{"healthchecks":{"web":[{"name":"existing uptime check","type":"startup","uptime":5}]}}' >app.json
-  run "$BIN_NAME" add --if-empty --uptime 10
-  echo "output: $output"
-  echo "status: $status"
-  [[ "$status" -eq 0 ]]
-  [[ "$output" == '{"healthchecks":{"web":[{"name":"existing uptime check","type":"startup","uptime":5}]}}' ]]
 }
 
 @test "[convert] checks-root" {
