@@ -70,7 +70,7 @@ func (c *CheckCommand) ParsedArguments(args []string) (map[string]command.Argume
 func (c *CheckCommand) FlagSet() *flag.FlagSet {
 	f := c.Meta.FlagSet(c.Name(), command.FlagSetClient)
 	f.IntVar(&c.port, "port", 5000, "container port to check")
-	f.StringSliceVar(&c.headers, "headers", []string{}, "a list of headers to specify for path requests")
+	f.StringSliceVar(&c.headers, "header", []string{}, "one or more headers in 'curl -H' format to specify for path requests")
 	f.StringVar(&c.appJSONFile, "app-json", "app.json", "full path to app.json file")
 	f.StringVar(&c.checkType, "check-type", "startup", "check to interpret")
 	f.StringVar(&c.networkName, "network", "bridge", "container network to use for http 'path' checks")
@@ -84,7 +84,7 @@ func (c *CheckCommand) AutocompleteFlags() complete.Flags {
 		complete.Flags{
 			"--app-json":     complete.PredictAnything,
 			"--check-type":   complete.PredictSet("liveness", "readiness", "startup"),
-			"--headers":      complete.PredictAnything,
+			"--header":       complete.PredictAnything,
 			"--network":      complete.PredictAnything,
 			"--port":         complete.PredictAnything,
 			"--process-type": complete.PredictAnything,
