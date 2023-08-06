@@ -126,15 +126,7 @@ func (c *AddCommand) Run(args []string) int {
 	exists := parsed.ExistsP(path)
 	length := len(parsed.Path(path).Children())
 	if c.ifEmpty && exists && length > 0 {
-		var b []byte
-		if c.prettyPrint {
-			b = parsed.BytesIndent("", "  ")
-		} else {
-			b = parsed.Bytes()
-		}
-
-		fmt.Println(string(b))
-		return 0
+		return c.writeAppJSON(parsed)
 	}
 
 	healthcheck := appjson.Healthcheck{
@@ -149,11 +141,15 @@ func (c *AddCommand) Run(args []string) int {
 		parsed.SetP([]appjson.Healthcheck{healthcheck}, path)
 	}
 
+	return c.writeAppJSON(parsed)
+}
+
+func (c *AddCommand) writeAppJSON(container *gabs.Container) int {
 	var b []byte
 	if c.prettyPrint {
-		b = parsed.BytesIndent("", "  ")
+		b = container.BytesIndent("", "  ")
 	} else {
-		b = parsed.Bytes()
+		b = container.Bytes()
 	}
 
 	if c.inPlace {
@@ -166,6 +162,5 @@ func (c *AddCommand) Run(args []string) int {
 	}
 
 	fmt.Println(string(b))
-
 	return 0
 }
