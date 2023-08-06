@@ -5,7 +5,7 @@ MAINTAINER_NAME = Jose Diaz-Gonzalez
 REPOSITORY = docker-container-healthchecker
 HARDWARE = $(shell uname -m)
 SYSTEM_NAME  = $(shell uname -s | tr '[:upper:]' '[:lower:]')
-BASE_VERSION ?= 0.6.3
+BASE_VERSION ?= 0.6.4
 IMAGE_NAME ?= $(MAINTAINER)/$(REPOSITORY)
 PACKAGECLOUD_REPOSITORY ?= dokku/dokku-betafish
 
