@@ -93,7 +93,7 @@ teardown() {
   echo "output: $output"
   echo "status: $status"
   assert_success
-  assert_output
+  assert_output_not_exists
 
   run cat app.json
   echo "output: $output"
