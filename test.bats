@@ -200,6 +200,17 @@ teardown() {
   assert_output_contains "Running healthcheck name='command check' attempts=3 command='\[echo hi\]' timeout=5 type='command' wait=5"
 }
 
+@test "[check] command check-error" {
+  echo '{"healthchecks":{"web":[{"attempts":1,"command":["python","-c","import sys; print(\"This is an error\"); sys.exit(1)"],"name":"command check","type":"startup","wait":0}]}}' >app.json
+
+  run "$BIN_NAME" check dch-test-1
+  echo "output: $output"
+  echo "status: $status"
+  assert_failure
+  assert_output_contains "This is an error" 2
+  assert_output_contains "Failure in name='command check': non-zero exit code 1"
+}
+
 @test "[convert] checks-root" {
   run "$BIN_NAME" convert tests/fixtures/checks-root.CHECKS
   echo "output: $output"
