@@ -223,10 +223,7 @@ func (c *CheckCommand) processHealthcheck(healthcheck appjson.Healthcheck, conta
 		}
 	}
 
-	delay := 0
-	if time.Since(tt).Seconds() < float64(healthcheck.GetInitialDelay()) {
-		delay = int(time.Since(tt).Seconds() - float64(healthcheck.GetInitialDelay()))
-	}
+	delay := float64(healthcheck.GetInitialDelay()) - time.Since(tt).Seconds()
 
 	switch healthcheck.GetCheckType() {
 	case "command":
@@ -237,7 +234,7 @@ func (c *CheckCommand) processHealthcheck(healthcheck appjson.Healthcheck, conta
 		logger.Info(fmt.Sprintf("Running healthcheck name='%s' type='uptime' uptime=%d", healthcheck.GetName(), healthcheck.Uptime))
 	}
 
-	if delay > 0 {
+	if delay > 0.0 {
 		time.Sleep(time.Duration(delay) * time.Second)
 	}
 
