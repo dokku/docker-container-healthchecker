@@ -197,7 +197,7 @@ teardown() {
   echo "status: $status"
   assert_success
   assert_output_contains "Healthcheck succeeded name='command check'"
-  assert_output_contains "Running healthcheck name='command check' attempts=3 command='[echo hi]' timeout=5 type='command' wait=5"
+  assert_output_contains "Running healthcheck name='command check' attempts=3 command='\[echo hi\]' timeout=5 type='command' wait=5"
 }
 
 @test "[convert] checks-root" {
