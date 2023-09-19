@@ -29,13 +29,13 @@ teardown() {
   echo "output: $output"
   echo "status: $status"
   assert_success
-  assert_output_contains '{"healthchecks":{"web":[{"name":"default","type":"startup","uptime":1}]}}'
+  assert_output '{"healthchecks":{"web":[{"name":"default","type":"startup","uptime":1}]}}'
 
   run "$BIN_NAME" add
   echo "output: $output"
   echo "status: $status"
   assert_success
-  assert_output_contains '{"healthchecks":{"web":[{"name":"default","type":"startup","uptime":1}]}}'
+  assert_output '{"healthchecks":{"web":[{"name":"default","type":"startup","uptime":1}]}}'
 }
 
 @test "[add] default in-place" {
@@ -49,7 +49,7 @@ teardown() {
   echo "output: $output"
   echo "status: $status"
   assert_success
-  assert_output_contains '{"healthchecks":{"web":[{"name":"default","type":"startup","uptime":1}]}}'
+  assert_output '{"healthchecks":{"web":[{"name":"default","type":"startup","uptime":1}]}}'
 }
 
 @test "[add] default in-place existing" {
@@ -63,7 +63,7 @@ teardown() {
   echo "output: $output"
   echo "status: $status"
   assert_success
-  assert_output_contains '{"healthchecks":{"web":[{"name":"default","type":"startup","uptime":1}]}}'
+  assert_output '{"healthchecks":{"web":[{"name":"default","type":"startup","uptime":1}]}}'
 
   run "$BIN_NAME" add web --if-empty --in-place
   echo "output: $output"
@@ -75,7 +75,7 @@ teardown() {
   echo "output: $output"
   echo "status: $status"
   assert_success
-  assert_output_contains '{"healthchecks":{"web":[{"name":"default","type":"startup","uptime":1}]}}'
+  assert_output '{"healthchecks":{"web":[{"name":"default","type":"startup","uptime":1}]}}'
 
   run "$BIN_NAME" add web --in-place --uptime 2
   echo "output: $output"
@@ -87,19 +87,19 @@ teardown() {
   echo "output: $output"
   echo "status: $status"
   assert_success
-  assert_output_contains '{"healthchecks":{"web":[{"name":"default","type":"startup","uptime":1},{"name":"default","type":"startup","uptime":2}]}}'
+  assert_output '{"healthchecks":{"web":[{"name":"default","type":"startup","uptime":1},{"name":"default","type":"startup","uptime":2}]}}'
 
   run "$BIN_NAME" add web --if-empty --in-place --uptime 2
   echo "output: $output"
   echo "status: $status"
   assert_success
-  assert_output_not_exists
+  assert_output
 
   run cat app.json
   echo "output: $output"
   echo "status: $status"
   assert_success
-  assert_output_contains '{"healthchecks":{"web":[{"name":"default","type":"startup","uptime":1},{"name":"default","type":"startup","uptime":2}]}}'
+  assert_output '{"healthchecks":{"web":[{"name":"default","type":"startup","uptime":1},{"name":"default","type":"startup","uptime":2}]}}'
 }
 
 @test "[add] custom uptime" {
@@ -107,7 +107,7 @@ teardown() {
   echo "output: $output"
   echo "status: $status"
   assert_success
-  assert_output_contains '{"healthchecks":{"web":[{"name":"default","type":"startup","uptime":10}]}}'
+  assert_output '{"healthchecks":{"web":[{"name":"default","type":"startup","uptime":10}]}}'
 }
 
 @test "[add] custom process-type" {
@@ -115,13 +115,13 @@ teardown() {
   echo "output: $output"
   echo "status: $status"
   assert_success
-  assert_output_contains '{"healthchecks":{"worker":[{"name":"default","type":"startup","uptime":1}]}}'
+  assert_output '{"healthchecks":{"worker":[{"name":"default","type":"startup","uptime":1}]}}'
 
   run "$BIN_NAME" add worker --uptime 10
   echo "output: $output"
   echo "status: $status"
   assert_success
-  assert_output_contains '{"healthchecks":{"worker":[{"name":"default","type":"startup","uptime":10}]}}'
+  assert_output '{"healthchecks":{"worker":[{"name":"default","type":"startup","uptime":10}]}}'
 }
 
 @test "[add] existing" {
@@ -131,7 +131,7 @@ teardown() {
   echo "output: $output"
   echo "status: $status"
   assert_success
-  assert_output_contains '{"healthchecks":{"web":[{"name":"existing uptime check","type":"startup","uptime":5},{"name":"default","type":"startup","uptime":10}]}}'
+  assert_output '{"healthchecks":{"web":[{"name":"existing uptime check","type":"startup","uptime":5},{"name":"default","type":"startup","uptime":10}]}}'
 }
 
 @test "[add] existing if-empty" {
@@ -140,7 +140,7 @@ teardown() {
   echo "output: $output"
   echo "status: $status"
   assert_success
-  assert_output_contains '{"healthchecks":{"web":[{"name":"existing uptime check","type":"startup","uptime":5}]}}'
+  assert_output '{"healthchecks":{"web":[{"name":"existing uptime check","type":"startup","uptime":5}]}}'
 }
 
 @test "[check] uptime check" {
@@ -205,7 +205,7 @@ teardown() {
   echo "output: $output"
   echo "status: $status"
   assert_success
-  assert_output_contains '{"healthchecks":{"web":[{"attempts":2,"name":"check-1","path":"/","type":"startup"}]}}'
+  assert_output '{"healthchecks":{"web":[{"attempts":2,"name":"check-1","path":"/","type":"startup"}]}}'
 }
 
 @test "[convert] hostname" {
@@ -213,7 +213,7 @@ teardown() {
   echo "output: $output"
   echo "status: $status"
   assert_success
-  assert_output_contains '{"healthchecks":{"web":[{"attempts":2,"content":"nodejs/express","httpHeaders":[{"name":"Host","value":"example.com"}],"name":"check-1","path":"/path","timeout":5,"type":"startup","wait":2}]}}'
+  assert_output '{"healthchecks":{"web":[{"attempts":2,"content":"nodejs/express","httpHeaders":[{"name":"Host","value":"example.com"}],"name":"check-1","path":"/path","timeout":5,"type":"startup","wait":2}]}}'
 }
 
 @test "[convert] hostname-scheme" {
@@ -221,7 +221,7 @@ teardown() {
   echo "output: $output"
   echo "status: $status"
   assert_success
-  assert_output_contains '{"healthchecks":{"web":[{"attempts":2,"content":"nodejs/express","httpHeaders":[{"name":"Host","value":"example.com"}],"name":"check-1","path":"/path","scheme":"https","timeout":5,"type":"startup","wait":2}]}}'
+  assert_output '{"healthchecks":{"web":[{"attempts":2,"content":"nodejs/express","httpHeaders":[{"name":"Host","value":"example.com"}],"name":"check-1","path":"/path","scheme":"https","timeout":5,"type":"startup","wait":2}]}}'
 }
 
 @test "[convert] dockerfile-app-json-formations" {
@@ -229,7 +229,7 @@ teardown() {
   echo "output: $output"
   echo "status: $status"
   assert_success
-  assert_output_contains '{"healthchecks":{"web":[{"attempts":2,"content":"nodejs/express","name":"check-1","path":"/","timeout":5,"type":"startup","wait":2}]}}'
+  assert_output '{"healthchecks":{"web":[{"attempts":2,"content":"nodejs/express","name":"check-1","path":"/","timeout":5,"type":"startup","wait":2}]}}'
 }
 
 @test "[convert] dockerfile-noexpose" {
@@ -237,7 +237,7 @@ teardown() {
   echo "output: $output"
   echo "status: $status"
   assert_success
-  assert_output_contains '{"healthchecks":{"web":[{"attempts":2,"content":"Hello World!","name":"check-1","path":"/","timeout":5,"type":"startup","wait":2}]}}'
+  assert_output '{"healthchecks":{"web":[{"attempts":2,"content":"Hello World!","name":"check-1","path":"/","timeout":5,"type":"startup","wait":2}]}}'
 }
 
 @test "[convert] dockerfile-procfile-bad" {
@@ -245,7 +245,7 @@ teardown() {
   echo "output: $output"
   echo "status: $status"
   assert_success
-  assert_output_contains '{"healthchecks":{"web":[{"attempts":2,"content":"nodejs/express","name":"check-1","path":"/","timeout":5,"type":"startup","wait":2}]}}'
+  assert_output '{"healthchecks":{"web":[{"attempts":2,"content":"nodejs/express","name":"check-1","path":"/","timeout":5,"type":"startup","wait":2}]}}'
 }
 
 @test "[convert] dockerfile-procfile" {
@@ -253,7 +253,7 @@ teardown() {
   echo "output: $output"
   echo "status: $status"
   assert_success
-  assert_output_contains '{"healthchecks":{"web":[{"attempts":2,"content":"nodejs/express","name":"check-1","path":"/","timeout":5,"type":"startup","wait":2}]}}'
+  assert_output '{"healthchecks":{"web":[{"attempts":2,"content":"nodejs/express","name":"check-1","path":"/","timeout":5,"type":"startup","wait":2}]}}'
 }
 
 @test "[convert] dockerfile" {
@@ -261,7 +261,7 @@ teardown() {
   echo "output: $output"
   echo "status: $status"
   assert_success
-  assert_output_contains '{"healthchecks":{"web":[{"attempts":2,"content":"Hello World!","name":"check-1","path":"/","timeout":5,"type":"startup","wait":2}]}}'
+  assert_output '{"healthchecks":{"web":[{"attempts":2,"content":"Hello World!","name":"check-1","path":"/","timeout":5,"type":"startup","wait":2}]}}'
 }
 
 @test "[convert] gitsubmodules" {
@@ -269,7 +269,7 @@ teardown() {
   echo "output: $output"
   echo "status: $status"
   assert_success
-  assert_output_contains '{"healthchecks":{"web":[{"content":"Hello","name":"check-1","path":"/","type":"startup"}]}}'
+  assert_output '{"healthchecks":{"web":[{"content":"Hello","name":"check-1","path":"/","type":"startup"}]}}'
 }
 
 @test "[convert] go-fail-postdeploy" {
@@ -277,7 +277,7 @@ teardown() {
   echo "output: $output"
   echo "status: $status"
   assert_success
-  assert_output_contains '{"healthchecks":{"web":[{"content":"go","name":"check-1","path":"/","type":"startup"}]}}'
+  assert_output '{"healthchecks":{"web":[{"content":"go","name":"check-1","path":"/","type":"startup"}]}}'
 }
 
 @test "[convert] go-fail-predeploy" {
@@ -285,7 +285,7 @@ teardown() {
   echo "output: $output"
   echo "status: $status"
   assert_success
-  assert_output_contains '{"healthchecks":{"web":[{"content":"go","name":"check-1","path":"/","type":"startup"}]}}'
+  assert_output '{"healthchecks":{"web":[{"content":"go","name":"check-1","path":"/","type":"startup"}]}}'
 }
 
 @test "[convert] go" {
@@ -293,7 +293,7 @@ teardown() {
   echo "output: $output"
   echo "status: $status"
   assert_success
-  assert_output_contains '{"healthchecks":{"web":[{"content":"go","name":"check-1","path":"/","type":"startup"}]}}'
+  assert_output '{"healthchecks":{"web":[{"content":"go","name":"check-1","path":"/","type":"startup"}]}}'
 }
 
 @test "[convert] java" {
@@ -301,7 +301,7 @@ teardown() {
   echo "output: $output"
   echo "status: $status"
   assert_success
-  assert_output_contains '{"healthchecks":{"web":[{"content":"Hello from Java","name":"check-1","path":"/","type":"startup"}]}}'
+  assert_output '{"healthchecks":{"web":[{"content":"Hello from Java","name":"check-1","path":"/","type":"startup"}]}}'
 }
 
 @test "[convert] multi" {
@@ -309,7 +309,7 @@ teardown() {
   echo "output: $output"
   echo "status: $status"
   assert_success
-  assert_output_contains '{"healthchecks":{"web":[{"content":"Heroku Multi Buildpack on Dokku","name":"check-1","path":"/","type":"startup"}]}}'
+  assert_output '{"healthchecks":{"web":[{"content":"Heroku Multi Buildpack on Dokku","name":"check-1","path":"/","type":"startup"}]}}'
 }
 
 @test "[convert] nodejs-express-noappjson" {
@@ -317,7 +317,7 @@ teardown() {
   echo "output: $output"
   echo "status: $status"
   assert_success
-  assert_output_contains '{"healthchecks":{"web":[{"attempts":2,"content":"nodejs/express","name":"check-1","path":"/","timeout":5,"type":"startup","wait":2}]}}'
+  assert_output '{"healthchecks":{"web":[{"attempts":2,"content":"nodejs/express","name":"check-1","path":"/","timeout":5,"type":"startup","wait":2}]}}'
 }
 
 @test "[convert] nodejs-express-noprocfile" {
@@ -325,7 +325,7 @@ teardown() {
   echo "output: $output"
   echo "status: $status"
   assert_success
-  assert_output_contains '{"healthchecks":{"web":[{"content":"nodejs/express","name":"check-1","path":"/","type":"startup"}]}}'
+  assert_output '{"healthchecks":{"web":[{"content":"nodejs/express","name":"check-1","path":"/","type":"startup"}]}}'
 }
 
 @test "[convert] php" {
@@ -333,7 +333,7 @@ teardown() {
   echo "output: $output"
   echo "status: $status"
   assert_success
-  assert_output_contains '{"healthchecks":{"web":[{"content":"\u003chtml\u003e\u003ch3\u003ephp\u003c/h3\u003e\u003c/html\u003e","name":"check-1","path":"/","type":"startup"}]}}'
+  assert_output '{"healthchecks":{"web":[{"content":"\u003chtml\u003e\u003ch3\u003ephp\u003c/h3\u003e\u003c/html\u003e","name":"check-1","path":"/","type":"startup"}]}}'
 }
 
 @test "[convert] python-flask" {
@@ -341,7 +341,7 @@ teardown() {
   echo "output: $output"
   echo "status: $status"
   assert_success
-  assert_output_contains '{"healthchecks":{"web":[{"content":"python/flask","name":"check-1","path":"/","type":"startup"}]}}'
+  assert_output '{"healthchecks":{"web":[{"content":"python/flask","name":"check-1","path":"/","type":"startup"}]}}'
 }
 
 @test "[convert] python" {
@@ -349,7 +349,7 @@ teardown() {
   echo "output: $output"
   echo "status: $status"
   assert_success
-  assert_output_contains '{"healthchecks":{"web":[{"attempts":2,"content":"python/http.server","name":"check-1","path":"/","timeout":7,"type":"startup","wait":2}]}}'
+  assert_output '{"healthchecks":{"web":[{"attempts":2,"content":"python/http.server","name":"check-1","path":"/","timeout":7,"type":"startup","wait":2}]}}'
 }
 
 @test "[convert] ruby" {
@@ -357,7 +357,7 @@ teardown() {
   echo "output: $output"
   echo "status: $status"
   assert_success
-  assert_output_contains '{"healthchecks":{"web":[{"content":"Hello, world","name":"check-1","path":"/","type":"startup"}]}}'
+  assert_output '{"healthchecks":{"web":[{"content":"Hello, world","name":"check-1","path":"/","type":"startup"}]}}'
 }
 
 @test "[convert] static" {
@@ -365,7 +365,7 @@ teardown() {
   echo "output: $output"
   echo "status: $status"
   assert_success
-  assert_output_contains '{"healthchecks":{"web":[{"content":"Static Page","name":"check-1","path":"/","type":"startup"}]}}'
+  assert_output '{"healthchecks":{"web":[{"content":"Static Page","name":"check-1","path":"/","type":"startup"}]}}'
 }
 
 @test "[convert] zombies" {
@@ -373,7 +373,7 @@ teardown() {
   echo "output: $output"
   echo "status: $status"
   assert_success
-  assert_output_contains '{"healthchecks":{"web":[{"content":"go","name":"check-1","path":"/","type":"startup"}]}}'
+  assert_output '{"healthchecks":{"web":[{"content":"go","name":"check-1","path":"/","type":"startup"}]}}'
 }
 
 @test "[convert] zombies-dockerfile-no-tini" {
@@ -381,7 +381,7 @@ teardown() {
   echo "output: $output"
   echo "status: $status"
   assert_success
-  assert_output_contains '{"healthchecks":{"web":[{"content":"go","name":"check-1","path":"/","type":"startup"}]}}'
+  assert_output '{"healthchecks":{"web":[{"content":"go","name":"check-1","path":"/","type":"startup"}]}}'
 }
 
 @test "[convert] zombies-dockerfile-tini" {
@@ -389,7 +389,7 @@ teardown() {
   echo "output: $output"
   echo "status: $status"
   assert_success
-  assert_output_contains '{"healthchecks":{"web":[{"content":"go","name":"check-1","path":"/","type":"startup"}]}}'
+  assert_output '{"healthchecks":{"web":[{"content":"go","name":"check-1","path":"/","type":"startup"}]}}'
 }
 
 flunk() {
