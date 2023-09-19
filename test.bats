@@ -165,6 +165,17 @@ teardown() {
   assert_output_contains "Running healthcheck name='path check' delay=0 path='/' retries=2 timeout=5 type='path'"
 }
 
+@test "[check] path check delay" {
+  echo '{"healthchecks":{"web":[{"name":"path check","type":"startup","path":"/", "initialDelay": 10}]}}' >app.json
+
+  run "$BIN_NAME" check dch-test-1
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+  assert_output_contains "Healthcheck succeeded name='path check'"
+  assert_output_contains "Running healthcheck name='path check' delay=10 path='/' retries=2 timeout=5 type='path'"
+}
+
 @test "[check] path check ip-address" {
   echo '{"healthchecks":{"web":[{"name":"path check","type":"startup","path":"/"}]}}' >app.json
 
