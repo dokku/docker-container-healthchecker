@@ -203,8 +203,6 @@ teardown() {
 @test "[check] command check-error" {
   echo '{"healthchecks":{"web":[{"attempts":1,"command":["python","-c","import sys; print(\"This is an error\"); sys.exit(1)"],"name":"command check","type":"startup","wait":0}]}}' >app.json
 
-
-
   run "$BIN_NAME" check dch-test-1
   echo "output: $output"
   echo "status: $status"
