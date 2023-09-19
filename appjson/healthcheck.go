@@ -17,7 +17,6 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/go-resty/resty/v2"
 	"github.com/moby/moby/client"
-	tcexec "github.com/testcontainers/testcontainers-go/exec"
 
 	"docker-container-healthchecker/logger"
 )
@@ -195,11 +194,11 @@ func (h Healthcheck) HandleFailure(errors []error) error {
 }
 
 func (h Healthcheck) executeCommandCheck(container types.ContainerJSON) ([]byte, []error) {
-	var reader io.Reader
+	var b []byte
 	err := retry.Do(
 		func() error {
 			var rerr error
-			reader, rerr = h.dockerExec(container, h.Command)
+			b, rerr = h.dockerExec(container, h.Command)
 			return rerr
 		},
 		retry.Attempts(uint(h.GetAttempts())),
@@ -207,18 +206,13 @@ func (h Healthcheck) executeCommandCheck(container types.ContainerJSON) ([]byte,
 	)
 
 	if err != nil {
-		return []byte{}, err.(retry.Error).WrappedErrors()
-	}
-
-	b, berr := io.ReadAll(reader)
-	if berr != nil {
-		return []byte{}, []error{berr}
+		return b, err.(retry.Error).WrappedErrors()
 	}
 
 	return b, nil
 }
 
-func (h Healthcheck) dockerExec(container types.ContainerJSON, cmd []string, options ...tcexec.ProcessOption) (io.Reader, error) {
+func (h Healthcheck) dockerExec(container types.ContainerJSON, cmd []string) ([]byte, error) {
 	var ctx context.Context
 	if h.GetTimeout() > 0 {
 		var cancel context.CancelFunc
@@ -250,14 +244,7 @@ func (h Healthcheck) dockerExec(container types.ContainerJSON, cmd []string, opt
 	if err != nil {
 		return nil, err
 	}
-
-	opt := &tcexec.ProcessOptions{
-		Reader: hijack.Reader,
-	}
-
-	for _, o := range options {
-		o.Apply(opt)
-	}
+	defer hijack.Close()
 
 	var exitCode int
 	for {
@@ -274,10 +261,11 @@ func (h Healthcheck) dockerExec(container types.ContainerJSON, cmd []string, opt
 		time.Sleep(100 * time.Millisecond)
 	}
 
+	b, _ := io.ReadAll(hijack.Reader)
 	if exitCode != 0 {
-		return opt.Reader, fmt.Errorf("non-zero exit code %d", exitCode)
+		return b, fmt.Errorf("non-zero exit code %d", exitCode)
 	}
-	return opt.Reader, nil
+	return b, nil
 }
 
 func (h Healthcheck) executePathCheck(container types.ContainerJSON, ctx HealthcheckContext) ([]byte, []error) {

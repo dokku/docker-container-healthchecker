@@ -8,6 +8,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unicode"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
@@ -223,10 +224,7 @@ func (c *CheckCommand) processHealthcheck(healthcheck appjson.Healthcheck, conta
 		}
 	}
 
-	delay := 0
-	if time.Since(tt).Seconds() < float64(healthcheck.GetInitialDelay()) {
-		delay = int(time.Since(tt).Seconds() - float64(healthcheck.GetInitialDelay()))
-	}
+	delay := float64(healthcheck.GetInitialDelay()) - time.Since(tt).Seconds()
 
 	switch healthcheck.GetCheckType() {
 	case "command":
@@ -237,7 +235,7 @@ func (c *CheckCommand) processHealthcheck(healthcheck appjson.Healthcheck, conta
 		logger.Info(fmt.Sprintf("Running healthcheck name='%s' type='uptime' uptime=%d", healthcheck.GetName(), healthcheck.Uptime))
 	}
 
-	if delay > 0 {
+	if delay > 0.0 {
 		time.Sleep(time.Duration(delay) * time.Second)
 	}
 
@@ -251,7 +249,22 @@ func (c *CheckCommand) processHealthcheck(healthcheck appjson.Healthcheck, conta
 	b, errs := healthcheck.Execute(container, ctx)
 	if len(errs) > 0 {
 		if len(b) > 0 {
-			logger.Error(fmt.Sprintf("Error for healthcheck name='%s', output: %s", healthcheck.GetName(), strings.TrimSpace(string(b))))
+			logger.LogHeader1("Start healthcheck output")
+			for _, line := range strings.Split(string(b), "\n") {
+				line = strings.TrimSpace(line)
+				line = strings.Map(func(r rune) rune {
+					if unicode.IsPrint(r) {
+						return r
+					}
+					return -1
+				}, line)
+				if len(line) == 0 {
+					continue
+				}
+
+				logger.Info(line)
+			}
+			logger.LogHeader1("End healthcheck output")
 		}
 		if err := healthcheck.HandleFailure(errs); err != nil {
 			logger.Error(fmt.Sprintf("Error in HandleFailure: %s", err))
