@@ -56,6 +56,8 @@ build-docker-image:
 $(targets): %-in-docker: .env.docker
 	docker run \
 		--env-file .env.docker \
+		--pid host \
+		--privileged \
 		--rm \
 		--volume /var/lib/docker:/var/lib/docker \
 		--volume /var/run/docker.sock:/var/run/docker.sock:ro \
@@ -98,6 +100,8 @@ build/deb/$(NAME)_$(VERSION)_amd64.deb: build/linux/$(NAME)-amd64
 		&& fpm \
 		--architecture amd64 \
 		--category utils \
+		--depends net-tools \
+		--depends util-linux \
 		--description "$$PACKAGE_DESCRIPTION" \
 		--input-type dir \
 		--license 'MIT License' \
@@ -118,6 +122,8 @@ build/deb/$(NAME)_$(VERSION)_arm64.deb: build/linux/$(NAME)-arm64
 		&& fpm \
 		--architecture arm64 \
 		--category utils \
+		--depends net-tools \
+		--depends util-linux \
 		--description "$$PACKAGE_DESCRIPTION" \
 		--input-type dir \
 		--license 'MIT License' \
@@ -138,6 +144,8 @@ build/deb/$(NAME)_$(VERSION)_armhf.deb: build/linux/$(NAME)-armhf
 		&& fpm \
 		--architecture armhf \
 		--category utils \
+		--depends net-tools \
+		--depends util-linux \
 		--description "$$PACKAGE_DESCRIPTION" \
 		--input-type dir \
 		--license 'MIT License' \
@@ -224,6 +232,8 @@ validate:
 	sha1sum build/deb/$(NAME)_$(VERSION)_amd64.deb
 	sha1sum build/deb/$(NAME)_$(VERSION)_arm64.deb
 	sha1sum build/deb/$(NAME)_$(VERSION)_armhf.deb
+	apt update
+	apt install -y net-tools util-linux
 	bats test.bats
 
 prebuild:

@@ -168,6 +168,10 @@ func (c *CheckCommand) Run(args []string) int {
 				continue
 			}
 
+			if healthcheck.Port == 0 {
+				healthcheck.Port = c.port
+			}
+
 			healthchecks = append(healthchecks, healthcheck)
 		}
 	}
@@ -198,7 +202,10 @@ func (c *CheckCommand) Run(args []string) int {
 
 	errorCount := 0
 	for resp := range responseChan {
-		errorCount += len(resp.Errors)
+		if !resp.Warn {
+			errorCount += len(resp.Errors)
+		}
+
 		if len(resp.Errors) > 0 {
 			err := resp.Errors[len(resp.Errors)-1]
 			logger.Error(fmt.Sprintf("Failure in name='%s': %s", resp.HealthcheckName, err.Error()))
@@ -213,6 +220,7 @@ func (c *CheckCommand) Run(args []string) int {
 type HealthcheckResponse struct {
 	HealthcheckName string
 	Errors          []error
+	Warn            bool
 }
 
 func (c *CheckCommand) processHealthcheck(healthcheck appjson.Healthcheck, container types.ContainerJSON, logger *command.ZerologUi) HealthcheckResponse {
@@ -227,11 +235,13 @@ func (c *CheckCommand) processHealthcheck(healthcheck appjson.Healthcheck, conta
 	delay := float64(healthcheck.GetInitialDelay()) - time.Since(tt).Seconds()
 
 	switch healthcheck.GetCheckType() {
-	case "command":
+	case appjson.CommandCheck:
 		logger.Info(fmt.Sprintf("Running healthcheck name='%s' attempts=%d command='%s' timeout=%d type='command' wait=%d", healthcheck.GetName(), healthcheck.GetAttempts(), healthcheck.Command, healthcheck.GetTimeout(), healthcheck.GetWait()))
-	case "path":
+	case appjson.ListeningCheck:
+		logger.Info(fmt.Sprintf("Running healthcheck name='%s' attempts=%d port=%d retries=%d timeout=%d type='listening' wait=%d", healthcheck.GetName(), healthcheck.GetAttempts(), healthcheck.Port, healthcheck.GetRetries(), healthcheck.GetTimeout(), healthcheck.GetWait()))
+	case appjson.PathCheck:
 		logger.Info(fmt.Sprintf("Running healthcheck name='%s' delay=%d path='%s' retries=%d timeout=%d type='path'", healthcheck.GetName(), healthcheck.GetInitialDelay(), healthcheck.GetPath(), healthcheck.GetRetries(), healthcheck.GetTimeout()))
-	case "uptime":
+	case appjson.UptimeCheck:
 		logger.Info(fmt.Sprintf("Running healthcheck name='%s' type='uptime' uptime=%d", healthcheck.GetName(), healthcheck.Uptime))
 	}
 
@@ -269,15 +279,11 @@ func (c *CheckCommand) processHealthcheck(healthcheck appjson.Healthcheck, conta
 		if err := healthcheck.HandleFailure(errs); err != nil {
 			logger.Error(fmt.Sprintf("Error in HandleFailure: %s", err))
 		}
-
-		return HealthcheckResponse{
-			HealthcheckName: healthcheck.GetName(),
-			Errors:          errs,
-		}
 	}
 
 	return HealthcheckResponse{
 		HealthcheckName: healthcheck.GetName(),
-		Errors:          []error{},
+		Errors:          errs,
+		Warn:            healthcheck.Warn,
 	}
 }

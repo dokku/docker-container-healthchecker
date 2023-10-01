@@ -8,17 +8,29 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
+	"net/url"
 	"os/exec"
 	"strings"
 	"time"
 
+	"github.com/alexellis/go-execute/v2"
 	retry "github.com/avast/retry-go"
 	"github.com/docker/docker/api/types"
 	"github.com/go-resty/resty/v2"
 	"github.com/moby/moby/client"
 
 	"docker-container-healthchecker/logger"
+)
+
+type CheckType int
+
+const (
+	CommandCheck CheckType = iota
+	ListeningCheck
+	PathCheck
+	UptimeCheck
 )
 
 type AppJSON struct {
@@ -31,6 +43,7 @@ type Healthcheck struct {
 	Content      string       `json:"content,omitempty"`
 	HTTPHeaders  []HTTPHeader `json:"httpHeaders,omitempty"`
 	InitialDelay int          `json:"initialDelay,omitempty"`
+	Listening    bool         `json:"listening,omitempty"`
 	Name         string       `json:"name,omitempty"`
 	Path         string       `json:"path,omitempty"`
 	Port         int          `json:"port,omitempty"`
@@ -39,6 +52,7 @@ type Healthcheck struct {
 	Type         string       `json:"type,omitempty"`
 	Uptime       int          `json:"uptime,omitempty"`
 	Wait         int          `json:"wait,omitempty"`
+	Warn         bool         `json:"warn,omitempty"`
 	OnFailure    *OnFailure   `json:"onFailure,omitempty"`
 }
 
@@ -68,16 +82,20 @@ func (h Healthcheck) GetAttempts() int {
 	return h.Attempts
 }
 
-func (h Healthcheck) GetCheckType() string {
+func (h Healthcheck) GetCheckType() CheckType {
+	if h.Listening {
+		return ListeningCheck
+	}
+
 	if len(h.Command) > 0 {
-		return "command"
+		return CommandCheck
 	}
 
 	if h.Path != "" {
-		return "path"
+		return PathCheck
 	}
 
-	return "uptime"
+	return UptimeCheck
 }
 
 func (h Healthcheck) GetInitialDelay() int {
@@ -136,11 +154,21 @@ func (h Healthcheck) Validate() error {
 			return fmt.Errorf("healthcheck name='%s' cannot contain both a container 'command' to execute and an http 'path' to check", h.GetName())
 		} else if h.Uptime > 0 {
 			return fmt.Errorf("healthcheck name='%s' cannot contain both a container 'command' to execute and an 'uptime' seconds value", h.GetName())
+		} else if h.Listening {
+			return fmt.Errorf("healthcheck name='%s' cannot contain both a container 'command' to execute and a 'listening' true value", h.GetName())
 		}
 	}
 
-	if h.Path != "" && h.Uptime > 0 {
-		return fmt.Errorf("healthcheck name='%s' cannot contain both an http 'path' to check and an 'uptime' seconds value", h.GetName())
+	if h.Path != "" {
+		if h.Uptime > 0 {
+			return fmt.Errorf("healthcheck name='%s' cannot contain both an http 'path' to check and an 'uptime' seconds value", h.GetName())
+		} else if h.Listening {
+			return fmt.Errorf("healthcheck name='%s' cannot contain both an http 'path' to check and a 'listening' true value", h.GetName())
+		}
+	}
+
+	if h.Uptime > 0 && h.Listening {
+		return fmt.Errorf("healthcheck name='%s' cannot contain both an 'uptime' seconds value and a 'listening' true value", h.GetName())
 	}
 
 	return nil
@@ -157,6 +185,10 @@ func (h Healthcheck) Execute(container types.ContainerJSON, ctx HealthcheckConte
 
 	if h.Path != "" {
 		return h.executePathCheck(container, ctx)
+	}
+
+	if h.Listening {
+		return h.executeListenerCheck(container)
 	}
 
 	return h.executeUptimeCheck(container)
@@ -198,7 +230,7 @@ func (h Healthcheck) executeCommandCheck(container types.ContainerJSON) ([]byte,
 	err := retry.Do(
 		func() error {
 			var rerr error
-			b, rerr = h.dockerExec(container, h.Command)
+			b, rerr = h.dockerExec(container)
 			return rerr
 		},
 		retry.Attempts(uint(h.GetAttempts())),
@@ -212,14 +244,12 @@ func (h Healthcheck) executeCommandCheck(container types.ContainerJSON) ([]byte,
 	return b, nil
 }
 
-func (h Healthcheck) dockerExec(container types.ContainerJSON, cmd []string) ([]byte, error) {
-	var ctx context.Context
+func (h Healthcheck) dockerExec(container types.ContainerJSON) ([]byte, error) {
+	ctx := context.Background()
 	if h.GetTimeout() > 0 {
 		var cancel context.CancelFunc
 		ctx, cancel = context.WithTimeout(context.Background(), time.Duration(h.GetTimeout())*time.Second)
 		defer cancel()
-	} else {
-		ctx = context.Background()
 	}
 
 	cli, err := client.NewClientWithOpts(
@@ -231,7 +261,7 @@ func (h Healthcheck) dockerExec(container types.ContainerJSON, cmd []string) ([]
 	}
 
 	response, err := cli.ContainerExecCreate(ctx, container.ID, types.ExecConfig{
-		Cmd:          cmd,
+		Cmd:          h.Command,
 		Detach:       false,
 		AttachStdout: true,
 		AttachStderr: true,
@@ -316,14 +346,9 @@ func (h Healthcheck) executePathCheck(container types.ContainerJSON, ctx Healthc
 		return []byte{}, []error{errors.New("invalid scheme specified, must be either http or https")}
 	}
 
-	port := ctx.Port
-	if h.Port != 0 {
-		port = h.Port
-	}
-
 	request := client.R()
 	resp, err := request.
-		Get(fmt.Sprintf("%s://%s:%d%s", scheme, ipAddress, port, h.GetPath()))
+		Get(fmt.Sprintf("%s://%s:%d%s", scheme, ipAddress, h.Port, h.GetPath()))
 	if err != nil {
 		return []byte{}, []error{err}
 	}
@@ -382,4 +407,130 @@ func (h Healthcheck) executeUptimeCheck(container types.ContainerJSON) ([]byte, 
 	}
 
 	return []byte(status), []error{}
+}
+
+func (h Healthcheck) executeListenerCheck(container types.ContainerJSON) ([]byte, []error) {
+	err := retry.Do(
+		func() error {
+			return h.listeningCheck(container)
+		},
+		retry.Attempts(uint(h.GetAttempts())),
+		retry.Delay(time.Duration(h.GetWait())*time.Second),
+	)
+
+	if err != nil {
+		return []byte{}, err.(retry.Error).WrappedErrors()
+	}
+
+	return []byte{}, nil
+}
+
+func (h Healthcheck) listeningCheck(container types.ContainerJSON) error {
+	if !container.State.Running {
+		return errors.New("container state is not running")
+	}
+
+	if container.State.Pid == 0 {
+		return errors.New("container state is not running")
+	}
+
+	ctx := context.Background()
+	if h.GetTimeout() > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(context.Background(), time.Duration(h.GetTimeout())*time.Second)
+		defer cancel()
+	}
+
+	cmd := execute.ExecTask{
+		Command:     "nsenter",
+		Args:        []string{"-t", fmt.Sprint(container.State.Pid), "-n", "netstat", "-plant"},
+		StreamStdio: false,
+	}
+	result, err := cmd.Execute(ctx)
+	if err != nil {
+		return err
+	}
+
+	if result.ExitCode != 0 {
+		errorMessage := strings.TrimSpace(result.Stderr)
+		if errorMessage == "nsenter: No such file or directory" {
+			return errors.New("unable to enter the container to check that the process is bound to the correct port and interface: missing nsenter binary in PATH")
+		}
+
+		if strings.HasSuffix(errorMessage, "netstat: No such file or directory") {
+			return errors.New("unable to enter the container to check that the process is bound to the correct port and interface: missing netstat binary in PATH")
+		}
+
+		if strings.HasPrefix(errorMessage, "nsenter: cannot open /proc/") && strings.HasSuffix(errorMessage, "No such file or directory") {
+			return errors.New("unable to enter the container to check that the process is bound to the correct port and interface: ensure runtime PID namespace is host")
+		}
+
+		return fmt.Errorf("unable to enter the container to check that the process is bound to the correct port and interface: %s", errorMessage)
+	}
+
+	addresses := map[string]bool{}
+	for _, line := range strings.Split(result.Stdout, "\n") {
+		if !strings.Contains(line, "LISTEN") {
+			continue
+		}
+
+		parts := strings.Fields(line)
+		addresses[parts[3]] = true
+	}
+
+	validAddresses := map[string]bool{
+		"0.0.0.0": true,
+		":::":     true,
+	}
+
+	for validAddress := range validAddresses {
+		if addresses[fmt.Sprintf("%s:%d", validAddress, h.Port)] {
+			return nil
+		}
+	}
+
+	for address := range addresses {
+		portSuffix := fmt.Sprintf(":%d", h.Port)
+		if strings.HasSuffix(address, portSuffix) {
+			ipAddress := strings.TrimSuffix(address, portSuffix)
+			ip := net.ParseIP(ipAddress)
+			if ip == nil {
+				return errors.New("listening ip address is not valid")
+			}
+
+			if ip.To4() == nil {
+				return fmt.Errorf("container listening on expected port (%d) with unexpected IPv6 interface: expected=:: actual=%s", h.Port, ipAddress)
+			}
+
+			return fmt.Errorf("container listening on expected port (%d) with unexpected IPv4 interface: expected=0.0.0.0 actual=%s", h.Port, ipAddress)
+		}
+
+		u, err := url.ParseRequestURI(fmt.Sprintf("http://%s", address))
+		if err != nil {
+			return fmt.Errorf("unable to parse listening address: %w", err)
+		}
+
+		portSuffix = fmt.Sprintf(":%s", u.Port())
+		ipAddress := strings.TrimSuffix(address, portSuffix)
+		ip := net.ParseIP(ipAddress)
+		if ip == nil {
+			return errors.New("listening ip address is not valid")
+		}
+
+		if validAddresses[ipAddress] {
+			if ip.To4() == nil {
+				return fmt.Errorf("container listening on expected IPv6 interface with an unexpected port: expected=%d actual=%s", h.Port, u.Port())
+			}
+
+			return fmt.Errorf("container listening on expected IPv4 interface with an unexpected port: expected=%d actual=%s", h.Port, u.Port())
+		}
+
+		if ip.To4() == nil {
+			return fmt.Errorf("container listening on unexpected IPv6 interface with an unexpected port: expected=:::%d actual=%s", h.Port, address)
+		}
+
+		return fmt.Errorf("container listening on unexpected IPv4 interface with an unexpected port: expected=0.0.0.0:%d actual=%s", h.Port, address)
+	}
+
+	return nil
 }
