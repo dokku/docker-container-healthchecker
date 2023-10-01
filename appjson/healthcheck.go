@@ -489,7 +489,6 @@ func (h Healthcheck) listeningCheck(container types.ContainerJSON) error {
 		}
 	}
 
-	var errs []error
 	for address := range addresses {
 		portSuffix := fmt.Sprintf(":%d", h.Port)
 		if strings.HasSuffix(address, portSuffix) {
@@ -508,7 +507,7 @@ func (h Healthcheck) listeningCheck(container types.ContainerJSON) error {
 
 		u, err := url.ParseRequestURI(fmt.Sprintf("http://%s", address))
 		if err != nil {
-			errs = append(errs, fmt.Errorf("unable to parse listening address: %w", err))
+			return fmt.Errorf("unable to parse listening address: %w", err)
 		}
 
 		portSuffix = fmt.Sprintf(":%s", u.Port())
