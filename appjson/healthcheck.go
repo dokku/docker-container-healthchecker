@@ -346,14 +346,9 @@ func (h Healthcheck) executePathCheck(container types.ContainerJSON, ctx Healthc
 		return []byte{}, []error{errors.New("invalid scheme specified, must be either http or https")}
 	}
 
-	port := ctx.Port
-	if h.Port != 0 {
-		port = h.Port
-	}
-
 	request := client.R()
 	resp, err := request.
-		Get(fmt.Sprintf("%s://%s:%d%s", scheme, ipAddress, port, h.GetPath()))
+		Get(fmt.Sprintf("%s://%s:%d%s", scheme, ipAddress, h.Port, h.GetPath()))
 	if err != nil {
 		return []byte{}, []error{err}
 	}

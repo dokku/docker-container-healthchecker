@@ -168,6 +168,10 @@ func (c *CheckCommand) Run(args []string) int {
 				continue
 			}
 
+			if healthcheck.Port == 0 {
+				healthcheck.Port = c.port
+			}
+
 			healthchecks = append(healthchecks, healthcheck)
 		}
 	}
