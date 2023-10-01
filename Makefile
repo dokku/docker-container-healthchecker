@@ -56,7 +56,7 @@ build-docker-image:
 $(targets): %-in-docker: .env.docker
 	docker run \
 		--env-file .env.docker \
-		--net=host \
+		--pid host \
 		--privileged \
 		--rm \
 		--volume /var/lib/docker:/var/lib/docker \
