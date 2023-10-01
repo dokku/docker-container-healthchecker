@@ -4,9 +4,10 @@ go 1.19
 
 require (
 	github.com/Jeffail/gabs/v2 v2.7.0
+	github.com/alexellis/go-execute/v2 v2.1.0
 	github.com/avast/retry-go v3.0.0+incompatible
 	github.com/docker/docker v24.0.6+incompatible
-	github.com/go-resty/resty/v2 v2.8.0
+	github.com/go-resty/resty/v2 v2.9.1
 	github.com/josegonzalez/cli-skeleton v0.10.0
 	github.com/mitchellh/cli v1.1.5
 	github.com/moby/moby v24.0.6+incompatible
@@ -19,7 +20,6 @@ require (
 	github.com/Masterminds/semver/v3 v3.1.1 // indirect
 	github.com/Masterminds/sprig/v3 v3.2.2 // indirect
 	github.com/Microsoft/go-winio v0.6.1 // indirect
-	github.com/alexellis/go-execute/v2 v2.1.0 // indirect
 	github.com/armon/go-radix v1.0.0 // indirect
 	github.com/bgentry/speakeasy v0.1.0 // indirect
 	github.com/docker/distribution v2.8.2+incompatible // indirect
