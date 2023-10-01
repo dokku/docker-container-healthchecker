@@ -452,11 +452,20 @@ func (h Healthcheck) listeningCheck(container types.ContainerJSON) error {
 	}
 
 	if result.ExitCode != 0 {
-		if strings.Contains(result.Stderr, "No such file or directory") {
-			return fmt.Errorf("unable to enter the container to check that the process is bound to the correct port and interface: ensure runtime PID namespace is host")
+		errorMessage := strings.TrimSpace(result.Stderr)
+		if errorMessage == "nsenter: No such file or directory" {
+			return errors.New("unable to enter the container to check that the process is bound to the correct port and interface: missing nsenter binary in PATH")
 		}
 
-		return fmt.Errorf("unable to enter the container to check that the process is bound to the correct port and interface: %s", result.Stderr)
+		if strings.HasSuffix(errorMessage, "netstat: No such file or directory") {
+			return errors.New("unable to enter the container to check that the process is bound to the correct port and interface: missing netstat binary in PATH")
+		}
+
+		if strings.HasPrefix(errorMessage, "nsenter: cannot open /proc/") && strings.HasSuffix(errorMessage, "No such file or directory") {
+			return errors.New("unable to enter the container to check that the process is bound to the correct port and interface: ensure runtime PID namespace is host")
+		}
+
+		return fmt.Errorf("unable to enter the container to check that the process is bound to the correct port and interface: %s", errorMessage)
 	}
 
 	addresses := map[string]bool{}
