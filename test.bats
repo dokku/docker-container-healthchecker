@@ -172,7 +172,7 @@ teardown() {
   echo "output: $output"
   echo "status: $status"
   assert_failure
-  assert_output_contains "Failure in name='listening check'"
+  assert_output_contains "Failure in name='listening check': container listening on expected IPv4 interface with an unexpected port: expected=5001 actual=5000"
   assert_output_contains "Running healthcheck name='listening check' attempts=3 port=5001 retries=2 timeout=5 type='listening' wait=5"
 }
 
@@ -183,7 +183,7 @@ teardown() {
   echo "output: $output"
   echo "status: $status"
   assert_success
-  assert_output_contains "Failure in name='listening check'"
+  assert_output_contains "Failure in name='listening check': container listening on expected IPv4 interface with an unexpected port: expected=5001 actual=5000"
   assert_output_contains "Running healthcheck name='listening check' attempts=3 port=5001 retries=2 timeout=5 type='listening' wait=5"
 }
 
