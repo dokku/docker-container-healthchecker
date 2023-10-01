@@ -154,6 +154,39 @@ teardown() {
   assert_output_contains "Running healthcheck name='uptime check' type='uptime' uptime=5"
 }
 
+@test "[check] listening check" {
+  echo '{"healthchecks":{"web":[{"name":"listening check","type":"startup","listening":true}]}}' >app.json
+
+  run "$BIN_NAME" check dch-test-1
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+  assert_output_contains "Healthcheck succeeded name='listening check'"
+  assert_output_contains "Running healthcheck name='listening check' delay=0 port=5000 retries=2 timeout=5 wait=5 type='listening'"
+}
+
+@test "[check] listening check error" {
+  echo '{"healthchecks":{"web":[{"name":"listening check","type":"startup","listening":true,"port":5001}]}}' >app.json
+
+  run "$BIN_NAME" check dch-test-1
+  echo "output: $output"
+  echo "status: $status"
+  assert_failure
+  assert_output_contains "Failure in name='listening check'"
+  assert_output_contains "Running healthcheck name='listening check' delay=0 port=5000 retries=2 timeout=5 wait=5 type='listening'"
+}
+
+@test "[check] listening check error warn-only" {
+  echo '{"healthchecks":{"web":[{"name":"listening check","type":"startup","listening":true,"port":5001,"warn":true}]}}' >app.json
+
+  run "$BIN_NAME" check dch-test-1
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+  assert_output_contains "Failure in name='listening check'"
+  assert_output_contains "Running healthcheck name='listening check' delay=0 port=5000 retries=2 timeout=5 wait=5 type='listening'"
+}
+
 @test "[check] path check" {
   echo '{"healthchecks":{"web":[{"name":"path check","type":"startup","path":"/"}]}}' >app.json
 
