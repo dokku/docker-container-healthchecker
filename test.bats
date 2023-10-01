@@ -102,6 +102,22 @@ teardown() {
   assert_output '{"healthchecks":{"web":[{"name":"default","type":"startup","uptime":1},{"name":"default","type":"startup","uptime":2}]}}'
 }
 
+@test "[add] default listening" {
+  run "$BIN_NAME" add --listening-check
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+  assert_output '{"healthchecks":{"web":[{"listening":true,"name":"default","type":"startup"}]}}'
+}
+
+@test "[add] default warn-only" {
+  run "$BIN_NAME" add --warn-only
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+  assert_output '{"healthchecks":{"web":[{"name":"default","type":"startup","uptime":1,"warn":true}]}}'
+}
+
 @test "[add] custom uptime" {
   run "$BIN_NAME" add --uptime 10
   echo "output: $output"
