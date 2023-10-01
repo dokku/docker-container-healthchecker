@@ -457,7 +457,7 @@ func (h Healthcheck) listeningCheck(container types.ContainerJSON) error {
 	}
 
 	if result.ExitCode != 0 {
-		return errors.New("unable to enter the container to check that the process is bound to the correct port and interface")
+		return fmt.Errorf("unable to enter the container to check that the process is bound to the correct port and interface: %s/%s", result.Stdout, result.Stderr)
 	}
 
 	addresses := map[string]bool{}
