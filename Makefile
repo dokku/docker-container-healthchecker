@@ -98,6 +98,7 @@ build/deb/$(NAME)_$(VERSION)_amd64.deb: build/linux/$(NAME)-amd64
 		&& fpm \
 		--architecture amd64 \
 		--category utils \
+		--depends util-linux \
 		--description "$$PACKAGE_DESCRIPTION" \
 		--input-type dir \
 		--license 'MIT License' \
@@ -118,6 +119,7 @@ build/deb/$(NAME)_$(VERSION)_arm64.deb: build/linux/$(NAME)-arm64
 		&& fpm \
 		--architecture arm64 \
 		--category utils \
+		--depends util-linux \
 		--description "$$PACKAGE_DESCRIPTION" \
 		--input-type dir \
 		--license 'MIT License' \
@@ -138,6 +140,7 @@ build/deb/$(NAME)_$(VERSION)_armhf.deb: build/linux/$(NAME)-armhf
 		&& fpm \
 		--architecture armhf \
 		--category utils \
+		--depends util-linux \
 		--description "$$PACKAGE_DESCRIPTION" \
 		--input-type dir \
 		--license 'MIT License' \
