@@ -14,12 +14,14 @@ import (
 type AddCommand struct {
 	command.Meta
 
-	appJSONFile string
-	checkType   string
-	ifEmpty     bool
-	inPlace     bool
-	prettyPrint bool
-	uptime      int
+	appJSONFile    string
+	checkType      string
+	ifEmpty        bool
+	inPlace        bool
+	listeningCheck bool
+	prettyPrint    bool
+	uptime         int
+	warn           bool
 }
 
 func (c *AddCommand) Name() string {
@@ -37,7 +39,9 @@ func (c *AddCommand) Help() string {
 func (c *AddCommand) Examples() map[string]string {
 	appName := os.Getenv("CLI_APP_NAME")
 	return map[string]string{
-		"Add the default healthcheck to the web process type": fmt.Sprintf("%s %s web --if-empty", appName, c.Name()),
+		"Add the default uptime healthcheck to the web process type":                                  fmt.Sprintf("%s %s web", appName, c.Name()),
+		"Add the default listening healthcheck to the web process type":                               fmt.Sprintf("%s %s web --listening-check", appName, c.Name()),
+		"Add the default uptime healthcheck to the web process type if there are no web healthchecks": fmt.Sprintf("%s %s web --if-empty", appName, c.Name()),
 	}
 }
 
@@ -67,6 +71,8 @@ func (c *AddCommand) FlagSet() *flag.FlagSet {
 	f.BoolVar(&c.inPlace, "in-place", false, "modify any app.json file in place")
 	f.StringVar(&c.appJSONFile, "app-json", "app.json", "full path to app.json file to update")
 	f.StringVar(&c.checkType, "type", "startup", "check to interpret")
+	f.BoolVar(&c.listeningCheck, "listening-check", false, "use a listening instead of uptime check")
+	f.BoolVar(&c.warn, "warn-only", false, "only warn on error")
 	f.IntVar(&c.uptime, "uptime", 1, "amount of time the container should be running for at minimum")
 	return f
 }
@@ -75,12 +81,13 @@ func (c *AddCommand) AutocompleteFlags() complete.Flags {
 	return command.MergeAutocompleteFlags(
 		c.Meta.AutocompleteFlags(command.FlagSetClient),
 		complete.Flags{
-			"--app-json": complete.PredictAnything,
-			"--if-empty": complete.PredictNothing,
-			"--in-place": complete.PredictNothing,
-			"--pretty":   complete.PredictNothing,
-			"--type":     complete.PredictSet("liveness", "readiness", "startup"),
-			"--uptime":   complete.PredictAnything,
+			"--app-json":  complete.PredictAnything,
+			"--if-empty":  complete.PredictNothing,
+			"--in-place":  complete.PredictNothing,
+			"--pretty":    complete.PredictNothing,
+			"--type":      complete.PredictSet("liveness", "readiness", "startup"),
+			"--uptime":    complete.PredictAnything,
+			"--warn-only": complete.PredictNothing,
 		},
 	)
 }
@@ -130,9 +137,15 @@ func (c *AddCommand) Run(args []string) int {
 	}
 
 	healthcheck := appjson.Healthcheck{
-		Name:   "default",
-		Type:   c.checkType,
-		Uptime: c.uptime,
+		Name: "default",
+		Type: c.checkType,
+		Warn: c.warn,
+	}
+
+	if c.listeningCheck {
+		healthcheck.Listening = true
+	} else {
+		healthcheck.Uptime = c.uptime
 	}
 
 	if exists && length > 0 {
