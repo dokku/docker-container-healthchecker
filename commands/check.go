@@ -234,7 +234,7 @@ func (c *CheckCommand) processHealthcheck(healthcheck appjson.Healthcheck, conta
 	case appjson.CommandCheck:
 		logger.Info(fmt.Sprintf("Running healthcheck name='%s' attempts=%d command='%s' timeout=%d type='command' wait=%d", healthcheck.GetName(), healthcheck.GetAttempts(), healthcheck.Command, healthcheck.GetTimeout(), healthcheck.GetWait()))
 	case appjson.ListeningCheck:
-		logger.Info(fmt.Sprintf("Running healthcheck name='%s' attempts=%d retries=%d timeout=%d type='listening' wait=%d", healthcheck.GetName(), healthcheck.GetAttempts(), healthcheck.GetRetries(), healthcheck.GetTimeout(), healthcheck.GetWait()))
+		logger.Info(fmt.Sprintf("Running healthcheck name='%s' attempts=%d port=%d, retries=%d timeout=%d type='listening' wait=%d", healthcheck.GetName(), healthcheck.GetAttempts(), healthcheck.Port, healthcheck.GetRetries(), healthcheck.GetTimeout(), healthcheck.GetWait()))
 	case appjson.PathCheck:
 		logger.Info(fmt.Sprintf("Running healthcheck name='%s' delay=%d path='%s' retries=%d timeout=%d type='path'", healthcheck.GetName(), healthcheck.GetInitialDelay(), healthcheck.GetPath(), healthcheck.GetRetries(), healthcheck.GetTimeout()))
 	case appjson.UptimeCheck:
