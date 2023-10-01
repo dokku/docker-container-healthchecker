@@ -457,7 +457,11 @@ func (h Healthcheck) listeningCheck(container types.ContainerJSON) error {
 	}
 
 	if result.ExitCode != 0 {
-		return fmt.Errorf("unable to enter the container to check that the process is bound to the correct port and interface: %s/%s", result.Stdout, result.Stderr)
+		if strings.Contains(result.Stderr, "No such file or directory") {
+			return fmt.Errorf("unable to enter the container to check that the process is bound to the correct port and interface: ensure runtime PID namespace is host")
+		}
+
+		return fmt.Errorf("unable to enter the container to check that the process is bound to the correct port and interface: %s", result.Stderr)
 	}
 
 	addresses := map[string]bool{}
