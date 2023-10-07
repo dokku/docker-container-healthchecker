@@ -452,6 +452,29 @@ teardown() {
   assert_output '{"healthchecks":{"web":[{"content":"go","name":"check-1","path":"/","type":"startup"}]}}'
 }
 
+@test "[exists] has healthchecks" {
+  run /bin/bash -c "$BIN_NAME exists web --app-json tests/fixtures/app.json 2>&1"
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+}
+
+@test "[exists] does not have healthcheck" {
+  run /bin/bash -c "$BIN_NAME exists worker --app-json tests/fixtures/app.json 2>&1"
+  echo "output: $output"
+  echo "status: $status"
+  assert_exit_status 1
+  assert_output_contains "No healthchecks found in app.json for worker process type"
+}
+
+@test "[exists] empty app.json" {
+  run /bin/bash -c "$BIN_NAME exists web --app-json tests/fixtures/empty.app.json 2>&1"
+  echo "output: $output"
+  echo "status: $status"
+  assert_exit_status 1
+  assert_output_contains "No healthchecks found in app.json for web process type"
+}
+
 flunk() {
   {
     if [[ "$#" -eq 0 ]]; then
@@ -469,6 +492,17 @@ assert_equal() {
       echo "expected: $1"
       echo "actual:   $2"
     } | flunk
+  fi
+}
+
+assert_exit_status() {
+  exit_status="$1"
+  if [[ "$status" -ne "$exit_status" ]]; then
+    {
+      echo "expected exit status: $exit_status"
+      echo "actual exit status:   $status"
+    } | flunk
+    flunk
   fi
 }
 
