@@ -45,6 +45,22 @@ The `app.json` file can also be modified in place instead of writing to stdout b
 docker-container-healthchecker convert path/to/CHECKS --pretty --inline
 ```
 
+### exists command
+
+Check if the `app.json` contains healthchecks for the specified process type:
+
+```shell
+docker-container-healthchecker exists web
+```
+
+If there are healthchecks, there will be no output and the exit code will be 0. An error message will be displayed and the exit code will be non-zero in all other cases.
+
+The `app.json` in the current working directory is used as input. A different `app.json` file can also be checked by specifying the path to an `app.json` file via the `--app-json` flag. If the file does not exist, an error will be raised.
+
+```shell
+docker-container-healthchecker exists web --app.json path/to/app.json
+```
+
 ### Check types
 
 #### `command`
