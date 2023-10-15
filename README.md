@@ -8,6 +8,29 @@ Runs healthchecks against local docker containers
 
 ## Usage
 
+### add command
+
+Add a healthcheck to an existing `app.json` file, specified by the `--app-json` flag. If the file does not exist, an empty `app.json` file will be assumed.
+
+```shell
+# creates a default startup uptime healthcheck
+# docker-container-healthchecker add $PROCESS_TYPE
+docker-container-healthchecker add web
+```
+
+By default, the output is written to `stdout`, though it can be written to the file specified via the `--in-place` flag.
+
+```shell
+docker-container-healthchecker add web --in-place
+```
+
+The `add` command supports adding a listening check, which optionally supports a `--port` flag (default: `5000`):
+
+```shell
+# listening check
+docker-container-healthchecker add web --listening-check --port 3000
+```
+
 ### check command
 
 After creating an app.json file, execute the healthchecker like so:
