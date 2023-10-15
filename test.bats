@@ -36,6 +36,18 @@ teardown() {
   echo "status: $status"
   assert_success
   assert_output '{"healthchecks":{"web":[{"name":"default","type":"startup","uptime":1}]}}'
+
+  run "$BIN_NAME" add --name custom-check
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+  assert_output '{"healthchecks":{"web":[{"name":"custom-check","type":"startup","uptime":1}]}}'
+
+  run "$BIN_NAME" add --app-json non-existing.json
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+  assert_output '{"healthchecks":{"web":[{"name":"default","type":"startup","uptime":1}]}}'
 }
 
 @test "[add] default in-place" {
@@ -107,7 +119,7 @@ teardown() {
   echo "output: $output"
   echo "status: $status"
   assert_success
-  assert_output '{"healthchecks":{"web":[{"listening":true,"name":"default","type":"startup"}]}}'
+  assert_output '{"healthchecks":{"web":[{"listening":true,"name":"default","port":5000,"type":"startup"}]}}'
 }
 
 @test "[add] default warn-only" {

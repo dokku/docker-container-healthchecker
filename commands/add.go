@@ -19,7 +19,9 @@ type AddCommand struct {
 	ifEmpty        bool
 	inPlace        bool
 	listeningCheck bool
+	name           string
 	prettyPrint    bool
+	port           int
 	uptime         int
 	warn           bool
 }
@@ -70,9 +72,11 @@ func (c *AddCommand) FlagSet() *flag.FlagSet {
 	f.BoolVar(&c.ifEmpty, "if-empty", false, "only add if there are no healthchecks for the process")
 	f.BoolVar(&c.inPlace, "in-place", false, "modify any app.json file in place")
 	f.StringVar(&c.appJSONFile, "app-json", "app.json", "full path to app.json file to update")
+	f.StringVar(&c.name, "name", "", "name to use for added check")
 	f.StringVar(&c.checkType, "type", "startup", "check to interpret")
 	f.BoolVar(&c.listeningCheck, "listening-check", false, "use a listening instead of uptime check")
 	f.BoolVar(&c.warn, "warn-only", false, "only warn on error")
+	f.IntVar(&c.port, "port", 5000, "container port to use")
 	f.IntVar(&c.uptime, "uptime", 1, "amount of time the container should be running for at minimum")
 	return f
 }
@@ -84,6 +88,8 @@ func (c *AddCommand) AutocompleteFlags() complete.Flags {
 			"--app-json":  complete.PredictAnything,
 			"--if-empty":  complete.PredictNothing,
 			"--in-place":  complete.PredictNothing,
+			"--name":      complete.PredictAnything,
+			"--port":      complete.PredictAnything,
 			"--pretty":    complete.PredictNothing,
 			"--type":      complete.PredictSet("liveness", "readiness", "startup"),
 			"--uptime":    complete.PredictAnything,
@@ -113,8 +119,8 @@ func (c *AddCommand) Run(args []string) int {
 		if _, err := os.Stat(c.appJSONFile); err == nil {
 			contents, err = os.ReadFile(c.appJSONFile)
 			if err != nil {
-				c.Ui.Error(err.Error())
-				return 1
+				c.Ui.Warn(err.Error())
+				contents = []byte("{}")
 			}
 		}
 	}
@@ -142,8 +148,13 @@ func (c *AddCommand) Run(args []string) int {
 		Warn: c.warn,
 	}
 
+	if c.name != "" {
+		healthcheck.Name = c.name
+	}
+
 	if c.listeningCheck {
 		healthcheck.Listening = true
+		healthcheck.Port = c.port
 	} else {
 		healthcheck.Uptime = c.uptime
 	}
