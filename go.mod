@@ -8,7 +8,7 @@ require (
 	github.com/avast/retry-go v3.0.0+incompatible
 	github.com/docker/docker v24.0.7+incompatible
 	github.com/go-resty/resty/v2 v2.11.0
-	github.com/josegonzalez/cli-skeleton v0.11.0
+	github.com/josegonzalez/cli-skeleton v0.13.0
 	github.com/mitchellh/cli v1.1.5
 	github.com/moby/moby v24.0.7+incompatible
 	github.com/posener/complete v1.2.3
@@ -46,7 +46,6 @@ require (
 	github.com/rs/zerolog v1.31.0 // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
-	github.com/stretchr/testify v1.8.4 // indirect
 	golang.org/x/crypto v0.17.0 // indirect
 	golang.org/x/mod v0.9.0 // indirect
 	golang.org/x/net v0.17.0 // indirect
