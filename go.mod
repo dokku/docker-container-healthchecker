@@ -8,7 +8,7 @@ require (
 	github.com/avast/retry-go v3.0.0+incompatible
 	github.com/docker/docker v25.0.2+incompatible
 	github.com/go-resty/resty/v2 v2.11.0
-	github.com/josegonzalez/cli-skeleton v0.14.0
+	github.com/josegonzalez/cli-skeleton v0.15.0
 	github.com/mitchellh/cli v1.1.5
 	github.com/moby/moby v25.0.2+incompatible
 	github.com/posener/complete v1.2.3
@@ -47,7 +47,7 @@ require (
 	github.com/opencontainers/image-spec v1.1.0-rc4 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rogpeppe/go-internal v1.8.1 // indirect
-	github.com/rs/zerolog v1.31.0 // indirect
+	github.com/rs/zerolog v1.32.0 // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.47.0 // indirect
