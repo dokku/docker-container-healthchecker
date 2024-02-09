@@ -11,7 +11,10 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"os"
 	"os/exec"
+	"reflect"
+	"strconv"
 	"strings"
 	"time"
 
@@ -20,6 +23,7 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/go-resty/resty/v2"
 	"github.com/moby/moby/client"
+	"github.com/moby/moby/pkg/archive"
 
 	"docker-container-healthchecker/logger"
 )
@@ -260,19 +264,102 @@ func (h Healthcheck) dockerExec(container types.ContainerJSON) ([]byte, error) {
 		return nil, err
 	}
 
+	shell := container.Config.Shell
+	entrypoint := container.Config.Entrypoint
+	if len(entrypoint) == len(shell)+1 && reflect.DeepEqual(entrypoint[:len(shell)], shell) {
+		h.Command = append([]string{entrypoint[2]}, h.Command...)
+	} else if len(entrypoint) > 0 && !reflect.DeepEqual(entrypoint, shell) {
+		h.Command = append(entrypoint, h.Command...)
+	} else if container.Config.Labels["com.gliderlabs.herokuish/stack"] != "" {
+		handler, err := os.CreateTemp("/tmp", "healthcheck-*")
+		if err != nil {
+			return nil, fmt.Errorf("unable to create temporary file: %w", err)
+		}
+		defer os.Remove(handler.Name())
+
+		command := []string{}
+		for _, arg := range h.Command {
+			command = append(command, strconv.Quote(arg))
+		}
+
+		script := fmt.Sprintf("#!/bin/bash\n%s\n", strings.Join(command, " "))
+		if _, err := handler.WriteString(script); err != nil {
+			return nil, fmt.Errorf("unable to write to temporary file: %w", err)
+		}
+
+		if err := handler.Chmod(os.FileMode(0755)); err != nil {
+			return nil, fmt.Errorf("unable to change file mode: %w", err)
+		}
+
+		if err := handler.Close(); err != nil {
+			return nil, fmt.Errorf("unable to close file: %w", err)
+		}
+
+		srcInfo, err := archive.CopyInfoSourcePath(handler.Name(), false)
+		if err != nil {
+			return nil, fmt.Errorf("unable to prepare source copy info: %w", err)
+		}
+
+		srcArchive, err := archive.TarResource(srcInfo)
+		if err != nil {
+			return nil, fmt.Errorf("unable to create tar archive: %w", err)
+		}
+		defer srcArchive.Close()
+
+		dstInfo := archive.CopyInfo{Path: handler.Name()}
+		dstDir, preparedArchive, err := archive.PrepareArchiveCopy(srcArchive, srcInfo, dstInfo)
+		if err != nil {
+			return nil, fmt.Errorf("unable to prepare archive copy: %w", err)
+		}
+		defer preparedArchive.Close()
+
+		err = cli.CopyToContainer(ctx, container.ID, dstDir, preparedArchive, types.CopyToContainerOptions{
+			AllowOverwriteDirWithFile: true,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("unable to copy file to container: %w", err)
+		}
+
+		username := "herokuish"
+		for _, user := range container.Config.Env {
+			if strings.HasPrefix(user, "USER=") {
+				username = strings.TrimPrefix(user, "USER=")
+				break
+			}
+		}
+
+		commands := map[string][]string{
+			"chown": {"chown", fmt.Sprintf("%[1]s:%[1]s", username), handler.Name()},
+			"chmod": {"chmod", "+x", handler.Name()},
+		}
+
+		for _, command := range commands {
+			resp, err := runCommandInContainer(ctx, cli, container, command)
+			if err != nil {
+				return resp, err
+			}
+		}
+
+		h.Command = []string{"/exec", handler.Name()}
+	}
+
+	return runCommandInContainer(ctx, cli, container, h.Command)
+}
+
+func runCommandInContainer(ctx context.Context, cli *client.Client, container types.ContainerJSON, command []string) ([]byte, error) {
 	response, err := cli.ContainerExecCreate(ctx, container.ID, types.ExecConfig{
-		Cmd:          h.Command,
+		Cmd:          command,
 		Detach:       false,
 		AttachStdout: true,
 		AttachStderr: true,
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unable to create exec: %w", err)
 	}
 
 	hijack, err := cli.ContainerExecAttach(ctx, response.ID, types.ExecStartCheck{})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unable to attach to exec: %w", err)
 	}
 	defer hijack.Close()
 
@@ -280,7 +367,7 @@ func (h Healthcheck) dockerExec(container types.ContainerJSON) ([]byte, error) {
 	for {
 		execResp, err := cli.ContainerExecInspect(ctx, response.ID)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("unable to inspect exec: %w", err)
 		}
 
 		if !execResp.Running {
@@ -295,7 +382,7 @@ func (h Healthcheck) dockerExec(container types.ContainerJSON) ([]byte, error) {
 	if exitCode != 0 {
 		return b, fmt.Errorf("non-zero exit code %d", exitCode)
 	}
-	return b, nil
+	return nil, nil
 }
 
 func (h Healthcheck) executePathCheck(container types.ContainerJSON, ctx HealthcheckContext) ([]byte, []error) {
