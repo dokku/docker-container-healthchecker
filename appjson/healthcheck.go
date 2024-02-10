@@ -570,6 +570,14 @@ func (h Healthcheck) listeningCheck(container types.ContainerJSON) error {
 		addresses[parts[3]] = true
 	}
 
+	if err := h.validateAddresses(addresses); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (h Healthcheck) validateAddresses(addresses map[string]bool) error {
 	for validAddress := range validAddresses {
 		if addresses[fmt.Sprintf("%s:%d", validAddress, h.Port)] {
 			return nil
