@@ -39,7 +39,7 @@ const (
 
 var validAddresses = map[string]bool{
 	"0.0.0.0": true,
-	":::":     true,
+	"::":      true,
 }
 
 type AppJSON struct {
