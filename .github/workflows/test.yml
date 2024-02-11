@@ -16,13 +16,8 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
-      - name: Setup Go
-        uses: actions/setup-go@v5
+      - uses: actions/setup-go@v5
         with:
           go-version-file: 'go.mod'
-      - name: Display Go version
-        run: go version
-      - name: Install dependencies
-        run: go get .
-      - name: Run go test
-        run: go test -v ./...
+      - run: go get .
+      - run: go test -v ./...
