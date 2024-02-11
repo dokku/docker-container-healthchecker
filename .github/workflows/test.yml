@@ -14,15 +14,12 @@ jobs:
   go-test:
     name: go-test
     runs-on: ubuntu-22.04
-    strategy:
-      matrix:
-        go-version: ['1.22.0']
     steps:
       - uses: actions/checkout@v4
-      - name: Setup Go ${{ matrix.go-version }}
+      - name: Setup Go
         uses: actions/setup-go@v4
         with:
-          go-version: ${{ matrix.go-version }}
+          go-version: 1.21
       - name: Display Go version
         run: go version
       - name: Install dependencies
