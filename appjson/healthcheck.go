@@ -37,6 +37,11 @@ const (
 	UptimeCheck
 )
 
+var validAddresses = map[string]bool{
+	"0.0.0.0": true,
+	"::":      true,
+}
+
 type AppJSON struct {
 	Healthchecks map[string][]Healthcheck `json:"healthchecks"`
 }
@@ -565,11 +570,14 @@ func (h Healthcheck) listeningCheck(container types.ContainerJSON) error {
 		addresses[parts[3]] = true
 	}
 
-	validAddresses := map[string]bool{
-		"0.0.0.0": true,
-		":::":     true,
+	if err := h.validateAddresses(addresses); err != nil {
+		return err
 	}
 
+	return nil
+}
+
+func (h Healthcheck) validateAddresses(addresses map[string]bool) error {
 	for validAddress := range validAddresses {
 		if addresses[fmt.Sprintf("%s:%d", validAddress, h.Port)] {
 			return nil
