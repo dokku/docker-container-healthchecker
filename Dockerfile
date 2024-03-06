@@ -1,4 +1,4 @@
-FROM golang:1.22.0
+FROM golang:1.22.1
 
 # hadolint ignore=DL3027
 RUN apt-get update \
