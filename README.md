@@ -143,7 +143,7 @@ Healthchecks are defined within a json file and have the following properties (t
 
 | field        | default                           | description                                     | scheduler aliases (kubernetes, nomad) |
 |--------------|-----------------------------------|-------------------------------------------------|---------------------------------------|
-| attempts     | default: `3`, unit: seconds       | Number of retry attempts to perform on failure. | `nomad=check_restart.limit` |
+| attempts     | default: `3`                      | Number of retry attempts to perform on failure. | `nomad=check_restart.limit` |
 | command      | default: `""` (empty string)      | Command to execute within container.            | `kubernetes=exec.Command` `nomad=command args` |
 | content      | default: `""` (empty string)      | Content to search in http path check output.    | |
 | httpHeaders  | default: `[]` (for http checks)   | A list of headers (defined by `name`/`value` attributes) to add to a request. | `kubernetes=httpHeaders` |
