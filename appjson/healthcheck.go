@@ -325,7 +325,7 @@ func (h Healthcheck) dockerExec(container types.ContainerJSON) ([]byte, error) {
 			return nil, fmt.Errorf("unable to copy file to container: %w", err)
 		}
 
-		username := "herokuish"
+		username := "herokuishuser"
 		for _, user := range container.Config.Env {
 			if strings.HasPrefix(user, "USER=") {
 				username = strings.TrimPrefix(user, "USER=")
