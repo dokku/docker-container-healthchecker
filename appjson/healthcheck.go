@@ -325,27 +325,7 @@ func (h Healthcheck) dockerExec(container types.ContainerJSON) ([]byte, error) {
 			return nil, fmt.Errorf("unable to copy file to container: %w", err)
 		}
 
-		username := "herokuish"
-		for _, user := range container.Config.Env {
-			if strings.HasPrefix(user, "USER=") {
-				username = strings.TrimPrefix(user, "USER=")
-				break
-			}
-		}
-
-		commands := map[string][]string{
-			"chown": {"chown", fmt.Sprintf("%[1]s:%[1]s", username), handler.Name()},
-			"chmod": {"chmod", "+x", handler.Name()},
-		}
-
-		for _, command := range commands {
-			resp, err := runCommandInContainer(ctx, cli, container, command)
-			if err != nil {
-				return resp, err
-			}
-		}
-
-		h.Command = []string{"/exec", handler.Name()}
+		h.Command = []string{"/exec", "bash", handler.Name()}
 	}
 
 	return runCommandInContainer(ctx, cli, container, h.Command)
