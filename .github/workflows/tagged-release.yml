@@ -18,6 +18,7 @@ jobs:
     runs-on: ubuntu-22.04
     env:
       CI_BRANCH: release
+      PACKAGECLOUD_REPOSITORY: dokku/dokku
       VERSION: ${{ github.ref_name }}
 
     steps:
