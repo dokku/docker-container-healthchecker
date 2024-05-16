@@ -1,14 +1,14 @@
 ---
-name: 'lint'
+name: "lint"
 
 # yamllint disable-line rule:truthy
 on:
   pull_request:
     branches:
-      - '*'
+      - "*"
   push:
     branches:
-      - 'master'
+      - "main"
 
 jobs:
   hadolint:
@@ -29,8 +29,8 @@ jobs:
       - name: Run markdown-lint
         uses: avto-dev/markdown-lint@04d43ee9191307b50935a753da3b775ab695eceb
         with:
-          config: '.github/linters/.markdown-lint.yml'
-          args: './README.md'
+          config: ".github/linters/.markdown-lint.yml"
+          args: "./README.md"
 
   shellcheck:
     name: shellcheck
@@ -66,4 +66,4 @@ jobs:
       - name: Run yamllint
         uses: ibiqlik/action-yamllint@2576378a8e339169678f9939646ee3ee325e845c
         with:
-          config_file: '.github/linters/.yamllint.yml'
+          config_file: ".github/linters/.yamllint.yml"

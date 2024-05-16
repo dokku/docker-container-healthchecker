@@ -4,11 +4,13 @@ name: "CodeQL"
 # yamllint disable-line rule:truthy
 on:
   push:
-    branches: [master]
+    branches:
+      - "main"
   pull_request:
-    branches: [master]
+    branches:
+      - "main"
   schedule:
-    - cron: '31 22 * * 5'
+    - cron: "31 22 * * 5"
 
 jobs:
   analyze:
@@ -22,7 +24,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: ['go']
+        language: ["go"]
 
     steps:
       - name: Checkout repository
