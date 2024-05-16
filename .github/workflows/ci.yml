@@ -9,7 +9,6 @@ on:
   push:
     branches:
       - "main"
-      - "release"
 
 jobs:
   build:
@@ -33,11 +32,3 @@ jobs:
         with:
           name: build
           path: build/**/*
-      - name: make release-in-docker
-        run: |
-          if [[ "${GITHUB_REF#refs/heads/}" == "release" ]]; then
-            export CI_BRANCH=${GITHUB_REF#refs/heads/}
-            export PACKAGECLOUD_REPOSITORY=dokku/dokku
-            rm .env.docker
-            make .env.docker release-in-docker release-packagecloud-in-docker
-          fi
