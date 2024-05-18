@@ -91,6 +91,8 @@ jobs:
           bundle exec make build/deb/${{ steps.repo-name.outputs.REPOSITORY_NAME }}_${{ github.ref_name }}_arm64.deb
           bundle exec make build/deb/${{ steps.repo-name.outputs.REPOSITORY_NAME }}_${{ github.ref_name }}_amd64.deb
           cp build/deb/*.deb dist/
+        env:
+          BUNDLE_GEMFILE: .github/Gemfile
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
@@ -101,6 +103,7 @@ jobs:
       - name: Release to PackageCloud
         run: bundle exec make release-packagecloud
         env:
+          BUNDLE_GEMFILE: .github/Gemfile
           PACKAGECLOUD_TOKEN: ${{ secrets.PACKAGECLOUD_TOKEN }}
 
       - name: Release
