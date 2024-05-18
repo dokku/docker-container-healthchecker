@@ -10,7 +10,7 @@ on:
 permissions:
   attestations: write
   id-token: write
-  contents: read
+  contents: write
 
 jobs:
   tagged-release:
