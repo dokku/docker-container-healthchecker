@@ -55,4 +55,4 @@ jobs:
           git tag "$GIT_NEXT_TAG"
           git push origin "$GIT_NEXT_TAG"
         env:
-          GIT_NEXT_TAG: ${{ steps.next-tag.outputs.BUMPED_VERSION }}
+          GIT_NEXT_TAG: ${{ steps.next-tag.outputs.version }}
