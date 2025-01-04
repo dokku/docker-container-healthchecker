@@ -77,7 +77,7 @@ jobs:
           subject-path: "dist/${{ steps.repo-name.outputs.REPOSITORY_NAME }}-windows-amd64.exe"
 
       - name: Setup Ruby
-        uses: ruby/setup-ruby@v1.206.0
+        uses: ruby/setup-ruby@v1.207.0
         with:
           bundler-cache: true
           working-directory: .github
