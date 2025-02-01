@@ -7,7 +7,7 @@ require (
 	github.com/alexellis/go-execute/v2 v2.2.1
 	github.com/avast/retry-go v3.0.0+incompatible
 	github.com/docker/docker v27.5.1+incompatible
-	github.com/go-resty/resty/v2 v2.16.2
+	github.com/go-resty/resty/v2 v2.16.5
 	github.com/josegonzalez/cli-skeleton v0.20.0
 	github.com/mitchellh/cli v1.1.5
 	github.com/moby/moby v27.5.1+incompatible
@@ -66,7 +66,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.22.0 // indirect
 	golang.org/x/crypto v0.31.0 // indirect
 	golang.org/x/mod v0.17.0 // indirect
-	golang.org/x/net v0.27.0 // indirect
+	golang.org/x/net v0.33.0 // indirect
 	golang.org/x/sync v0.7.0 // indirect
 	golang.org/x/sys v0.28.0 // indirect
 	golang.org/x/term v0.27.0 // indirect
