@@ -21,9 +21,10 @@ import (
 	"github.com/alexellis/go-execute/v2"
 	retry "github.com/avast/retry-go"
 	"github.com/docker/docker/api/types"
+	container_types "github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/client"
+	"github.com/docker/docker/pkg/archive"
 	"github.com/go-resty/resty/v2"
-	"github.com/moby/moby/client"
-	"github.com/moby/moby/pkg/archive"
 
 	"docker-container-healthchecker/logger"
 )
@@ -318,7 +319,7 @@ func (h Healthcheck) dockerExec(container types.ContainerJSON) ([]byte, error) {
 		}
 		defer preparedArchive.Close()
 
-		err = cli.CopyToContainer(ctx, container.ID, dstDir, preparedArchive, types.CopyToContainerOptions{
+		err = cli.CopyToContainer(ctx, container.ID, dstDir, preparedArchive, container_types.CopyToContainerOptions{
 			AllowOverwriteDirWithFile: true,
 		})
 		if err != nil {
@@ -332,7 +333,7 @@ func (h Healthcheck) dockerExec(container types.ContainerJSON) ([]byte, error) {
 }
 
 func runCommandInContainer(ctx context.Context, cli *client.Client, container types.ContainerJSON, command []string) ([]byte, error) {
-	response, err := cli.ContainerExecCreate(ctx, container.ID, types.ExecConfig{
+	response, err := cli.ContainerExecCreate(ctx, container.ID, container_types.ExecOptions{
 		Cmd:          command,
 		Detach:       false,
 		AttachStdout: true,
@@ -342,7 +343,7 @@ func runCommandInContainer(ctx context.Context, cli *client.Client, container ty
 		return nil, fmt.Errorf("unable to create exec: %w", err)
 	}
 
-	hijack, err := cli.ContainerExecAttach(ctx, response.ID, types.ExecStartCheck{})
+	hijack, err := cli.ContainerExecAttach(ctx, response.ID, container_types.ExecAttachOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("unable to attach to exec: %w", err)
 	}
