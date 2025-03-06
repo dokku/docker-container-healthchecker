@@ -10,7 +10,6 @@ require (
 	github.com/go-resty/resty/v2 v2.16.5
 	github.com/josegonzalez/cli-skeleton v0.20.0
 	github.com/mitchellh/cli v1.1.5
-	github.com/moby/moby v27.5.1+incompatible
 	github.com/posener/complete v1.2.3
 	github.com/spf13/pflag v1.0.6
 )

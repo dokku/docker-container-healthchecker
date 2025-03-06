@@ -21,9 +21,9 @@ import (
 	"github.com/alexellis/go-execute/v2"
 	retry "github.com/avast/retry-go"
 	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/client"
+	"github.com/docker/docker/pkg/archive"
 	"github.com/go-resty/resty/v2"
-	"github.com/moby/moby/client"
-	"github.com/moby/moby/pkg/archive"
 
 	"docker-container-healthchecker/logger"
 )
