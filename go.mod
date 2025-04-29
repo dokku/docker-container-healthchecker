@@ -6,7 +6,7 @@ require (
 	github.com/Jeffail/gabs/v2 v2.7.0
 	github.com/alexellis/go-execute/v2 v2.2.1
 	github.com/avast/retry-go v3.0.0+incompatible
-	github.com/docker/docker v28.1.0+incompatible
+	github.com/docker/docker v28.1.1+incompatible
 	github.com/go-resty/resty/v2 v2.16.5
 	github.com/josegonzalez/cli-skeleton v0.22.0
 	github.com/mitchellh/cli v1.1.5
