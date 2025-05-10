@@ -24,7 +24,7 @@ import (
 	container_types "github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/archive"
-	"github.com/go-resty/resty/v2"
+	resty "resty.dev/v3"
 
 	"docker-container-healthchecker/logger"
 )
@@ -383,6 +383,7 @@ func (h Healthcheck) executePathCheck(container types.ContainerJSON, ctx Healthc
 	}
 
 	client := resty.New()
+	defer client.Close()
 	client.RemoveProxy()
 	client.SetLogger(logger.CreateLogger())
 	client.SetRetryCount(h.GetRetries())
@@ -426,7 +427,13 @@ func (h Healthcheck) executePathCheck(container types.ContainerJSON, ctx Healthc
 		return []byte{}, []error{err}
 	}
 
-	body := resp.Body()
+	reader := resp.Body
+	defer reader.Close()
+	body, err := io.ReadAll(reader)
+	if err != nil {
+		return []byte{}, []error{fmt.Errorf("unable to read response body: %w", err)}
+	}
+
 	if resp.StatusCode() < 200 {
 		return body, []error{fmt.Errorf("unexpected status code: %d", resp.StatusCode())}
 	}
