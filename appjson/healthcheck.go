@@ -444,7 +444,7 @@ func (h Healthcheck) executePathCheck(container types.ContainerJSON, ctx Healthc
 	}
 
 	if h.Content != "" && !bytes.Contains(responseBody, []byte(h.Content)) {
-		return responseBody, []error{fmt.Errorf("unable to find expected content in response responseBodyReader: %s", h.Content)}
+		return responseBody, []error{fmt.Errorf("unable to find expected content in response body: %s", h.Content)}
 	}
 
 	return responseBody, []error{}
