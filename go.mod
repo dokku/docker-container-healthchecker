@@ -7,11 +7,11 @@ require (
 	github.com/alexellis/go-execute/v2 v2.2.1
 	github.com/avast/retry-go v3.0.0+incompatible
 	github.com/docker/docker v28.1.1+incompatible
+	github.com/go-resty/resty/v2 v2.16.5
 	github.com/josegonzalez/cli-skeleton v0.22.0
 	github.com/mitchellh/cli v1.1.5
 	github.com/posener/complete v1.2.3
 	github.com/spf13/pflag v1.0.6
-	resty.dev/v3 v3.0.0-beta.3
 )
 
 require (
@@ -70,6 +70,5 @@ require (
 	golang.org/x/sync v0.7.0 // indirect
 	golang.org/x/sys v0.31.0 // indirect
 	golang.org/x/term v0.30.0 // indirect
-	golang.org/x/time v0.11.0 // indirect
 	golang.org/x/tools v0.22.0 // indirect
 )
