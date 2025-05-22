@@ -14,6 +14,7 @@ import (
 	"os"
 	"os/exec"
 	"reflect"
+	"resty.dev/v3"
 	"strconv"
 	"strings"
 	"time"
@@ -24,7 +25,6 @@ import (
 	container_types "github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/archive"
-	"github.com/go-resty/resty/v2"
 
 	"docker-container-healthchecker/logger"
 )
@@ -382,13 +382,20 @@ func (h Healthcheck) executePathCheck(container types.ContainerJSON, ctx Healthc
 		ipAddress = endpoint.IPAddress
 	}
 
-	client := resty.New()
-	client.RemoveProxy()
-	client.SetLogger(logger.CreateLogger())
-	client.SetRetryCount(h.GetRetries())
-	client.SetRetryWaitTime(time.Duration(h.GetWait()) * time.Second)
+	restyClient := resty.New()
+	defer restyClient.Close()
+
+	restyClient.RemoveProxy()
+	restyClient.SetLogger(logger.CreateLogger())
+	restyClient.SetRetryCount(h.GetRetries())
+	restyClient.SetRetryWaitTime(time.Duration(h.GetWait()) * time.Second)
+	restyClient.SetRetryDefaultConditions(false)
+	restyClient.AddRetryConditions(func(response *resty.Response, err error) bool {
+		return err != nil || !response.IsSuccess()
+	})
+
 	if h.GetTimeout() > 0 {
-		client.SetTimeout(time.Duration(h.GetTimeout()) * time.Second)
+		restyClient.SetTimeout(time.Duration(h.GetTimeout()) * time.Second)
 	}
 
 	for _, header := range ctx.Headers {
@@ -397,14 +404,14 @@ func (h Healthcheck) executePathCheck(container types.ContainerJSON, ctx Healthc
 			return []byte{}, []error{fmt.Errorf("invalid header, must be delimited by ':' (colon) character: '%s'", header)}
 		}
 
-		client.SetHeader(strings.TrimSpace(parts[0]), strings.TrimSpace(parts[1]))
+		restyClient.SetHeader(strings.TrimSpace(parts[0]), strings.TrimSpace(parts[1]))
 	}
 
 	for _, header := range h.HTTPHeaders {
-		client.SetHeader(header.Name, header.Value)
+		restyClient.SetHeader(header.Name, header.Value)
 	}
 
-	client.SetHeader("Accept", "*/*")
+	restyClient.SetHeader("Accept", "*/*")
 
 	scheme := strings.ToLower(h.Scheme)
 	if scheme == "" {
@@ -419,27 +426,28 @@ func (h Healthcheck) executePathCheck(container types.ContainerJSON, ctx Healthc
 		return []byte{}, []error{errors.New("invalid scheme specified, must be either http or https")}
 	}
 
-	request := client.R()
+	request := restyClient.R()
 	resp, err := request.
 		Get(fmt.Sprintf("%s://%s:%d%s", scheme, ipAddress, h.Port, h.GetPath()))
 	if err != nil {
 		return []byte{}, []error{err}
 	}
 
-	body := resp.Body()
-	if resp.StatusCode() < 200 {
-		return body, []error{fmt.Errorf("unexpected status code: %d", resp.StatusCode())}
+	defer resp.Body.Close()
+	responseBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return []byte{}, []error{fmt.Errorf("unable to read response body: %w", err)}
 	}
 
-	if resp.StatusCode() >= 400 {
-		return body, []error{fmt.Errorf("unexpected status code: %d", resp.StatusCode())}
+	if !resp.IsSuccess() {
+		return responseBody, []error{fmt.Errorf("unexpected status code: %d", resp.StatusCode())}
 	}
 
-	if h.Content != "" && !bytes.Contains(body, []byte(h.Content)) {
-		return body, []error{fmt.Errorf("unable to find expected content in response body: %s", h.Content)}
+	if h.Content != "" && !bytes.Contains(responseBody, []byte(h.Content)) {
+		return responseBody, []error{fmt.Errorf("unable to find expected content in response responseBodyReader: %s", h.Content)}
 	}
 
-	return body, []error{}
+	return responseBody, []error{}
 }
 
 func (h Healthcheck) executeUptimeCheck(container types.ContainerJSON) ([]byte, []error) {
