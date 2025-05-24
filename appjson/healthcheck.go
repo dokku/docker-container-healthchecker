@@ -434,20 +434,20 @@ func (h Healthcheck) executePathCheck(container types.ContainerJSON, ctx Healthc
 	}
 
 	defer resp.Body.Close()
-	responseBody, err := io.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return []byte{}, []error{fmt.Errorf("unable to read response body: %w", err)}
 	}
 
 	if !resp.IsSuccess() {
-		return responseBody, []error{fmt.Errorf("unexpected status code: %d", resp.StatusCode())}
+		return body, []error{fmt.Errorf("unexpected status code: %d", resp.StatusCode())}
 	}
 
-	if h.Content != "" && !bytes.Contains(responseBody, []byte(h.Content)) {
-		return responseBody, []error{fmt.Errorf("unable to find expected content in response body: %s", h.Content)}
+	if h.Content != "" && !bytes.Contains(body, []byte(h.Content)) {
+		return body, []error{fmt.Errorf("unable to find expected content in response body: %s", h.Content)}
 	}
 
-	return responseBody, []error{}
+	return body, []error{}
 }
 
 func (h Healthcheck) executeUptimeCheck(container types.ContainerJSON) ([]byte, []error) {
