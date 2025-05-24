@@ -14,6 +14,7 @@ import (
 	"os"
 	"os/exec"
 	"reflect"
+	"resty.dev/v3"
 	"strconv"
 	"strings"
 	"time"
@@ -24,7 +25,6 @@ import (
 	container_types "github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/archive"
-	"github.com/go-resty/resty/v2"
 
 	"docker-container-healthchecker/logger"
 )
@@ -383,10 +383,17 @@ func (h Healthcheck) executePathCheck(container types.ContainerJSON, ctx Healthc
 	}
 
 	client := resty.New()
+	defer client.Close()
+
 	client.RemoveProxy()
 	client.SetLogger(logger.CreateLogger())
 	client.SetRetryCount(h.GetRetries())
 	client.SetRetryWaitTime(time.Duration(h.GetWait()) * time.Second)
+	client.SetRetryDefaultConditions(false)
+	client.AddRetryConditions(func(response *resty.Response, err error) bool {
+		return err != nil || !response.IsSuccess()
+	})
+
 	if h.GetTimeout() > 0 {
 		client.SetTimeout(time.Duration(h.GetTimeout()) * time.Second)
 	}
@@ -426,12 +433,13 @@ func (h Healthcheck) executePathCheck(container types.ContainerJSON, ctx Healthc
 		return []byte{}, []error{err}
 	}
 
-	body := resp.Body()
-	if resp.StatusCode() < 200 {
-		return body, []error{fmt.Errorf("unexpected status code: %d", resp.StatusCode())}
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return []byte{}, []error{fmt.Errorf("unable to read response body: %w", err)}
 	}
 
-	if resp.StatusCode() >= 400 {
+	if !resp.IsSuccess() {
 		return body, []error{fmt.Errorf("unexpected status code: %d", resp.StatusCode())}
 	}
 
