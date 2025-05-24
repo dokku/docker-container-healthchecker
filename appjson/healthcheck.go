@@ -382,20 +382,20 @@ func (h Healthcheck) executePathCheck(container types.ContainerJSON, ctx Healthc
 		ipAddress = endpoint.IPAddress
 	}
 
-	restyClient := resty.New()
-	defer restyClient.Close()
+	client := resty.New()
+	defer client.Close()
 
-	restyClient.RemoveProxy()
-	restyClient.SetLogger(logger.CreateLogger())
-	restyClient.SetRetryCount(h.GetRetries())
-	restyClient.SetRetryWaitTime(time.Duration(h.GetWait()) * time.Second)
-	restyClient.SetRetryDefaultConditions(false)
-	restyClient.AddRetryConditions(func(response *resty.Response, err error) bool {
+	client.RemoveProxy()
+	client.SetLogger(logger.CreateLogger())
+	client.SetRetryCount(h.GetRetries())
+	client.SetRetryWaitTime(time.Duration(h.GetWait()) * time.Second)
+	client.SetRetryDefaultConditions(false)
+	client.AddRetryConditions(func(response *resty.Response, err error) bool {
 		return err != nil || !response.IsSuccess()
 	})
 
 	if h.GetTimeout() > 0 {
-		restyClient.SetTimeout(time.Duration(h.GetTimeout()) * time.Second)
+		client.SetTimeout(time.Duration(h.GetTimeout()) * time.Second)
 	}
 
 	for _, header := range ctx.Headers {
@@ -404,14 +404,14 @@ func (h Healthcheck) executePathCheck(container types.ContainerJSON, ctx Healthc
 			return []byte{}, []error{fmt.Errorf("invalid header, must be delimited by ':' (colon) character: '%s'", header)}
 		}
 
-		restyClient.SetHeader(strings.TrimSpace(parts[0]), strings.TrimSpace(parts[1]))
+		client.SetHeader(strings.TrimSpace(parts[0]), strings.TrimSpace(parts[1]))
 	}
 
 	for _, header := range h.HTTPHeaders {
-		restyClient.SetHeader(header.Name, header.Value)
+		client.SetHeader(header.Name, header.Value)
 	}
 
-	restyClient.SetHeader("Accept", "*/*")
+	client.SetHeader("Accept", "*/*")
 
 	scheme := strings.ToLower(h.Scheme)
 	if scheme == "" {
@@ -426,7 +426,7 @@ func (h Healthcheck) executePathCheck(container types.ContainerJSON, ctx Healthc
 		return []byte{}, []error{errors.New("invalid scheme specified, must be either http or https")}
 	}
 
-	request := restyClient.R()
+	request := client.R()
 	resp, err := request.
 		Get(fmt.Sprintf("%s://%s:%d%s", scheme, ipAddress, h.Port, h.GetPath()))
 	if err != nil {
