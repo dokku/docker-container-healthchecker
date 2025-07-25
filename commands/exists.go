@@ -17,11 +17,11 @@ type ExistsCommand struct {
 }
 
 func (c *ExistsCommand) Name() string {
-	return "add"
+	return "exists"
 }
 
 func (c *ExistsCommand) Synopsis() string {
-	return "Adds a healthcheck to a process type"
+	return "Checks if a process type has any healthchecks defined"
 }
 
 func (c *ExistsCommand) Help() string {
