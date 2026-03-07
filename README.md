@@ -137,6 +137,23 @@ Ensures the container is up for at least `uptime` in seconds. If a container has
 
 If the `uptime` type is in use, the `command` and `path` healthcheck properties must be empty.
 
+### Healthcheck Types
+
+The `type` property specifies the purpose of a healthcheck. The following types are supported:
+
+- **`startup`** — Determines if a container has started successfully and is ready to accept traffic. This is the default type. Checked once during container startup; the container is not considered running until startup checks pass.
+- **`liveness`** — Determines if a running container is still healthy. Failure indicates the container is in a broken state (e.g. deadlocked) and should be restarted.
+- **`readiness`** — Determines if a running container is ready to accept new requests. Unlike liveness, failure does not trigger a restart — it temporarily removes the container from serving traffic until it recovers.
+
+#### Scheduler support
+
+Not all schedulers support every healthcheck type:
+
+| Scheduler      | `startup` | `liveness` | `readiness` |
+|----------------|-----------|------------|-------------|
+| `docker-local` | yes       | no         | no          |
+| `k3s`          | yes       | yes        | yes         |
+
 ### File Format
 
 Healthchecks are defined within a json file and have the following properties (the respective scheduler properties are also noted for comparison):
@@ -154,7 +171,7 @@ Healthchecks are defined within a json file and have the following properties (t
 | path         | default: `/` (for http checks)    | An http path to check. | `kubernetes=httpGet.path` `nomad=path` |
 | port         | default: `5000`, unit: int        | Port to run healthcheck against. Overrides flag. | `kubernetes=port` |
 | timeout      | default: `5`, unit: seconds       | Number of seconds to wait before timing out a healthcheck. | `kubernetes=timeoutSeconds` `nomad=timeout` |
-| type         | default: `""` (none)              | Type of the healthcheck. Options: `liveness`, `readiness`, `startup` | |
+| type         | default: `""` (none)              | Type of the healthcheck. Options: `liveness`, `readiness`, `startup`. See [Healthcheck Types](#healthcheck-types) for details. | |
 | uptime       | default: `""` (none)              | Amount of time the container must be alive before the container is considered healthy. Any restarts will cause this to check to fail, and this check does not respect retries. | |
 | wait         | default: `5`, unit: seconds       | Number of seconds to wait between healthcheck attempts. | `kubernetes=periodSeconds` `nomad=interval` |
 | warn         | default: `false`                  | Outputs a warning for the check but does not count failures against the service. | |
