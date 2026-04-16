@@ -98,3 +98,101 @@ jobs:
           files: dist/*
           generate_release_notes: true
           make_latest: "true"
+
+  bump-formula:
+    name: bump-formula
+    runs-on: ubuntu-24.04
+    needs: tagged-release
+    env:
+      VERSION: ${{ github.ref_name }}
+    steps:
+      - name: Download release binaries
+        uses: actions/download-artifact@v6
+        with:
+          name: dist
+          path: dist
+
+      - name: Compute SHA256 checksums
+        id: checksums
+        run: |
+          AMD64_SHA=$(sha256sum dist/docker-container-healthchecker-darwin-amd64 | awk '{print $1}')
+          ARM64_SHA=$(sha256sum dist/docker-container-healthchecker-darwin-arm64 | awk '{print $1}')
+          echo "amd64_sha=${AMD64_SHA}" >> "$GITHUB_OUTPUT"
+          echo "arm64_sha=${ARM64_SHA}" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout homebrew-repo
+        uses: actions/checkout@v6
+        with:
+          repository: dokku/homebrew-repo
+          token: ${{ secrets.HOMEBREW_GITHUB_API_TOKEN }}
+          path: homebrew-repo
+
+      - name: Update formula
+        env:
+          AMD64_SHA: ${{ steps.checksums.outputs.amd64_sha }}
+          ARM64_SHA: ${{ steps.checksums.outputs.arm64_sha }}
+        working-directory: homebrew-repo
+        run: |
+          python3 - <<'PY'
+          import os, re
+          path = "Formula/docker-container-healthchecker.rb"
+          with open(path) as f:
+              content = f.read()
+
+          version = os.environ["VERSION"]
+          amd64_sha = os.environ["AMD64_SHA"]
+          arm64_sha = os.environ["ARM64_SHA"]
+
+          # Update the top-level `version "..."` line.
+          content, n = re.subn(
+              r'(^\s*version ")[^"]+(")',
+              lambda m: f'{m.group(1)}{version}{m.group(2)}',
+              content,
+              count=1,
+              flags=re.MULTILINE,
+          )
+          if n != 1:
+              raise SystemExit("failed to update version line")
+
+          # Anchor each sha256 rewrite to the preceding arch-specific URL line.
+          def replace_sha(text, arch, new_sha):
+              pattern = re.compile(
+                  r'(url "[^"]*darwin-' + re.escape(arch) + r'"\s*\n\s*sha256 ")'
+                  r'[0-9a-fA-F]+(")',
+                  re.MULTILINE,
+              )
+              new_text, n = pattern.subn(
+                  lambda m: f'{m.group(1)}{new_sha}{m.group(2)}',
+                  text,
+                  count=1,
+              )
+              if n != 1:
+                  raise SystemExit(f"failed to update sha256 for {arch}")
+              return new_text
+
+          content = replace_sha(content, "amd64", amd64_sha)
+          content = replace_sha(content, "arm64", arm64_sha)
+
+          with open(path, "w") as f:
+              f.write(content)
+          PY
+          git --no-pager diff Formula/docker-container-healthchecker.rb
+
+      - name: Open pull request on homebrew-repo
+        env:
+          GH_TOKEN: ${{ secrets.HOMEBREW_GITHUB_API_TOKEN }}
+        working-directory: homebrew-repo
+        run: |
+          git config user.name "Dokku Bot"
+          git config user.email "no-reply@dokku.com"
+          BRANCH="update-docker-container-healthchecker-${VERSION}"
+          git checkout -b "${BRANCH}"
+          git add Formula/docker-container-healthchecker.rb
+          git commit -m "chore(docker-container-healthchecker): bump to ${VERSION}"
+          git push origin "${BRANCH}"
+          gh pr create \
+            --repo dokku/homebrew-repo \
+            --head "${BRANCH}" \
+            --base master \
+            --title "chore(docker-container-healthchecker): bump to ${VERSION}" \
+            --body "Automated bump of docker-container-healthchecker to ${VERSION}."
