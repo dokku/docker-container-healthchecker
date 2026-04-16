@@ -1,5 +1,7 @@
 #!/usr/bin/env bats
 
+bats_require_minimum_version 1.5.0
+
 export SYSTEM_NAME="$(uname -s | tr '[:upper:]' '[:lower:]')"
 export BIN_NAME="build/$SYSTEM_NAME/docker-container-healthchecker-amd64"
 
@@ -485,6 +487,69 @@ teardown() {
   echo "status: $status"
   assert_exit_status 1
   assert_output_contains "No healthchecks found in app.json for web process type"
+}
+
+@test "[plugin] docker-cli-plugin-metadata returns valid JSON" {
+  run "$BIN_NAME" docker-cli-plugin-metadata
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run /bin/bash -c "'$BIN_NAME' docker-cli-plugin-metadata | jq -r .SchemaVersion"
+  assert_success
+  assert_output "0.1.0"
+
+  run /bin/bash -c "'$BIN_NAME' docker-cli-plugin-metadata | jq -e '.Vendor != \"\"'"
+  assert_success
+
+  run /bin/bash -c "'$BIN_NAME' docker-cli-plugin-metadata | jq -e '.ShortDescription != \"\"'"
+  assert_success
+}
+
+@test "[plugin] docker-cli-plugin-metadata is hidden from --help" {
+  run /bin/bash -c "'$BIN_NAME' --help 2>&1"
+  echo "output: $output"
+  echo "status: $status"
+  [[ "$output" != *"docker-cli-plugin-metadata"* ]] || flunk "expected --help not to list docker-cli-plugin-metadata"
+}
+
+@test "[plugin] arg-strip: Docker-style invocation runs subcommand" {
+  run env DOCKER_CLI_PLUGIN_ORIGINAL_CLI_COMMAND=/usr/bin/docker "$BIN_NAME" container-healthchecker version
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run /bin/bash -c "DOCKER_CLI_PLUGIN_ORIGINAL_CLI_COMMAND=/usr/bin/docker '$BIN_NAME' container-healthchecker docker-cli-plugin-metadata | jq -r .SchemaVersion"
+  assert_success
+  assert_output "0.1.0"
+}
+
+@test "[plugin] arg-strip: direct invocation with plugin-name prefix is NOT stripped" {
+  # Without the DOCKER_CLI_PLUGIN_ORIGINAL_CLI_COMMAND env var, the binary
+  # must not eat a leading "container-healthchecker" token. It should try to
+  # dispatch "container-healthchecker" as a subcommand, fail to find it, and
+  # print the usage/help output (mitchellh/cli exits 127 for unknown commands).
+  run -127 "$BIN_NAME" container-healthchecker version
+  echo "output: $output"
+  echo "status: $status"
+  assert_output_contains "Available commands are:"
+}
+
+@test "[plugin] arg-strip: direct invocation without prefix still works" {
+  run "$BIN_NAME" version
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+}
+
+@test "[plugin] arg-strip: end-to-end check against real container" {
+  echo '{"healthchecks":{"web":[{"name":"uptime check","type":"startup","uptime":5}]}}' >app.json
+
+  run env DOCKER_CLI_PLUGIN_ORIGINAL_CLI_COMMAND=/usr/bin/docker "$BIN_NAME" container-healthchecker check dch-test-1
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+  assert_output_contains "Healthcheck succeeded name='uptime check'"
 }
 
 flunk() {
