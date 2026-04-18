@@ -1,0 +1,6 @@
+docs:
+  - getting-started.md
+  - command-reference.md
+  - file-format.md
+  - healthchecks.md
+  - dokku-migration.md
