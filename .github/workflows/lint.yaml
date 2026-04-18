@@ -56,7 +56,7 @@ jobs:
         uses: luizm/action-sh-checker@883217215b11c1fabbf00eb1a9a041f62d74c744
         env:
           GITHUB_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
-          SHFMT_OPTS: -l -d -i 2
+          SHFMT_OPTS: -l -d -bn -ci -i 2
         with:
           sh_checker_shellcheck_disable: true
           sh_checker_comment: true
