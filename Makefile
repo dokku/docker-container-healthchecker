@@ -48,14 +48,15 @@ build: prebuild
 	@$(MAKE) build/deb/$(NAME)_$(VERSION)_amd64.deb
 	@$(MAKE) build/deb/$(NAME)_$(VERSION)_arm64.deb
 
+PLUGIN_NAME = docker-healthcheck
 HOST_OS = $(shell uname -s | tr '[:upper:]' '[:lower:]')
 HOST_ARCH = $(shell uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')
 
 install:
 	@$(MAKE) build/$(HOST_OS)/$(NAME)-$(HOST_ARCH)
 	mkdir -p $(HOME)/.docker/cli-plugins
-	cp build/$(HOST_OS)/$(NAME)-$(HOST_ARCH) $(HOME)/.docker/cli-plugins/$(NAME)
-	chmod +x $(HOME)/.docker/cli-plugins/$(NAME)
+	cp build/$(HOST_OS)/$(NAME)-$(HOST_ARCH) $(HOME)/.docker/cli-plugins/$(PLUGIN_NAME)
+	chmod +x $(HOME)/.docker/cli-plugins/$(PLUGIN_NAME)
 
 build-docker-image:
 	docker build --rm -q -f Dockerfile -t $(IMAGE_NAME):build .
@@ -115,7 +116,7 @@ build/deb/$(NAME)_$(VERSION)_amd64.deb: build/linux/$(NAME)-amd64
 		--version $(VERSION) \
 		--verbose \
 		build/linux/$(NAME)-amd64=/usr/bin/$(NAME) \
-		build/linux/$(NAME)-amd64=/usr/libexec/docker/cli-plugins/$(NAME) \
+		build/linux/$(NAME)-amd64=/usr/libexec/docker/cli-plugins/$(PLUGIN_NAME) \
 		LICENSE=/usr/share/doc/$(NAME)/copyright
 
 build/deb/$(NAME)_$(VERSION)_arm64.deb: build/linux/$(NAME)-arm64
@@ -138,7 +139,7 @@ build/deb/$(NAME)_$(VERSION)_arm64.deb: build/linux/$(NAME)-arm64
 		--version $(VERSION) \
 		--verbose \
 		build/linux/$(NAME)-arm64=/usr/bin/$(NAME) \
-		build/linux/$(NAME)-arm64=/usr/libexec/docker/cli-plugins/$(NAME) \
+		build/linux/$(NAME)-arm64=/usr/libexec/docker/cli-plugins/$(PLUGIN_NAME) \
 		LICENSE=/usr/share/doc/$(NAME)/copyright
 
 clean:

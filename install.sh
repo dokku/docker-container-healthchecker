@@ -13,6 +13,7 @@
 set -eu
 
 NAME="docker-container-healthchecker"
+PLUGIN_NAME="docker-healthcheck"
 REPO="dokku/docker-container-healthchecker"
 PLUGIN_DIR="${PLUGIN_DIR:-${HOME}/.docker/cli-plugins}"
 
@@ -58,7 +59,7 @@ curl -fsSL "$url" -o "${tmpdir}/${asset}"
 tar -xzf "${tmpdir}/${asset}" -C "$tmpdir"
 
 mkdir -p "$PLUGIN_DIR"
-install -m 0755 "${tmpdir}/${NAME}-${arch}" "${PLUGIN_DIR}/${NAME}"
+install -m 0755 "${tmpdir}/${NAME}-${arch}" "${PLUGIN_DIR}/${PLUGIN_NAME}"
 
-echo "installed ${NAME} ${VERSION} to ${PLUGIN_DIR}/${NAME}"
-echo "try: docker container-healthchecker version"
+echo "installed ${NAME} ${VERSION} to ${PLUGIN_DIR}/${PLUGIN_NAME}"
+echo "try: docker healthcheck version"

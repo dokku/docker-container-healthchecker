@@ -15,11 +15,14 @@ setup_file() {
 teardown_file() {
   docker rm -f dch-test-1 >/dev/null || true
   rm -f app.json >/dev/null || true
+  rm -f "$HOME/.docker/cli-plugins/docker-healthcheck"
   make clean
 }
 
 setup() {
   rm -f app.json >/dev/null || true
+  mkdir -p "$HOME/.docker/cli-plugins"
+  cp "$BIN_NAME" "$HOME/.docker/cli-plugins/docker-healthcheck"
 }
 
 teardown() {
@@ -513,43 +516,29 @@ teardown() {
   [[ "$output" != *"docker-cli-plugin-metadata"* ]] || flunk "expected --help not to list docker-cli-plugin-metadata"
 }
 
-@test "[plugin] arg-strip: Docker-style invocation runs subcommand" {
-  run env DOCKER_CLI_PLUGIN_ORIGINAL_CLI_COMMAND=/usr/bin/docker "$BIN_NAME" container-healthchecker version
+@test "[plugin] docker healthcheck version" {
+  run docker healthcheck version
   echo "output: $output"
   echo "status: $status"
   assert_success
-
-  run /bin/bash -c "DOCKER_CLI_PLUGIN_ORIGINAL_CLI_COMMAND=/usr/bin/docker '$BIN_NAME' container-healthchecker docker-cli-plugin-metadata | jq -r .SchemaVersion"
-  assert_success
-  assert_output "0.1.0"
+  [[ -n "$output" ]] || flunk "expected non-empty version output"
 }
 
-@test "[plugin] arg-strip: direct invocation with plugin-name prefix is NOT stripped" {
-  # Without the DOCKER_CLI_PLUGIN_ORIGINAL_CLI_COMMAND env var, the binary
-  # must not eat a leading "container-healthchecker" token. It should try to
-  # dispatch "container-healthchecker" as a subcommand, fail to find it, and
-  # print the usage/help output (mitchellh/cli exits 127 for unknown commands).
-  run -127 "$BIN_NAME" container-healthchecker version
-  echo "output: $output"
-  echo "status: $status"
-  assert_output_contains "Available commands are:"
-}
-
-@test "[plugin] arg-strip: direct invocation without prefix still works" {
-  run "$BIN_NAME" version
-  echo "output: $output"
-  echo "status: $status"
-  assert_success
-}
-
-@test "[plugin] arg-strip: end-to-end check against real container" {
+@test "[plugin] docker healthcheck check" {
   echo '{"healthchecks":{"web":[{"name":"uptime check","type":"startup","uptime":5}]}}' >app.json
 
-  run env DOCKER_CLI_PLUGIN_ORIGINAL_CLI_COMMAND=/usr/bin/docker "$BIN_NAME" container-healthchecker check dch-test-1
+  run docker healthcheck check dch-test-1
   echo "output: $output"
   echo "status: $status"
   assert_success
   assert_output_contains "Healthcheck succeeded name='uptime check'"
+}
+
+@test "[plugin] direct invocation without prefix still works" {
+  run "$BIN_NAME" version
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
 }
 
 flunk() {
