@@ -33,7 +33,7 @@ func Run(args []string) int {
 	// Strip the prepended name only in that case so direct invocations keep
 	// their args intact.
 	if os.Getenv("DOCKER_CLI_PLUGIN_ORIGINAL_CLI_COMMAND") != "" &&
-		len(os.Args) > 1 && os.Args[1] == "container-healthchecker" {
+		len(os.Args) > 1 && os.Args[1] == "healthcheck" {
 		cliArgs = os.Args[2:]
 	}
 
