@@ -8,6 +8,37 @@ Runs healthchecks against local docker containers
 
 ## Usage
 
+### Docker CLI plugin
+
+`docker-container-healthchecker` can be invoked as a [Docker CLI plugin](https://github.com/docker/cli/issues/1534), exposing every subcommand under `docker container-healthchecker`:
+
+```shell
+docker container-healthchecker check cb0ce984f2aa
+# equivalent to
+docker-container-healthchecker check cb0ce984f2aa
+```
+
+The binary is already named to match Docker's `docker-<name>` CLI plugin convention. It is registered as a plugin by placing (or symlinking) it into one of Docker's plugin lookup directories:
+
+- Per-user: `~/.docker/cli-plugins/docker-container-healthchecker`
+- System-wide (Linux): `/usr/libexec/docker/cli-plugins/docker-container-healthchecker` or `/usr/local/lib/docker/cli-plugins/docker-container-healthchecker`
+- System-wide (Homebrew): `$(brew --prefix)/lib/docker/cli-plugins/docker-container-healthchecker`
+
+The supported distribution channels wire this up automatically:
+
+- **Debian/Ubuntu:** the `.deb` package installs both `/usr/bin/docker-container-healthchecker` (for direct invocation) and `/usr/libexec/docker/cli-plugins/docker-container-healthchecker` (for Docker CLI plugin lookup).
+- **Homebrew:** `brew install docker-container-healthchecker` places the binary under `bin/` and symlinks it into Homebrew's `lib/docker/cli-plugins/`.
+- **Release tarball / install script:** run
+
+  ```shell
+  curl -fsSL https://raw.githubusercontent.com/dokku/docker-container-healthchecker/main/install.sh | sh
+  ```
+
+  to download the appropriate release tarball for your OS/arch and install the binary at `~/.docker/cli-plugins/docker-container-healthchecker`.
+- **From source:** `make install` builds for your current OS/arch and drops the binary into `~/.docker/cli-plugins/`.
+
+Once installed, `docker --help` will list `container-healthchecker*` under the "Plugin commands" section, and `docker container-healthchecker <subcommand>` works identically to the bare binary.
+
 ### add command
 
 Add a healthcheck to an existing `app.json` file, specified by the `--app-json` flag. If the file does not exist, an empty `app.json` file will be assumed.
