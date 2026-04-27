@@ -29,7 +29,7 @@ curl -fsSL https://raw.githubusercontent.com/dokku/docker-container-healthchecke
 To install a specific version:
 
 ```bash
-VERSION=v0.11.3 curl -fsSL https://raw.githubusercontent.com/dokku/docker-container-healthchecker/main/install.sh | sh
+VERSION=v0.14.1 curl -fsSL https://raw.githubusercontent.com/dokku/docker-container-healthchecker/main/install.sh | sh
 ```
 
 To install to a custom directory:

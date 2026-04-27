@@ -4,10 +4,10 @@
 #
 # Usage:
 #   curl -fsSL https://raw.githubusercontent.com/dokku/docker-container-healthchecker/main/install.sh | sh
-#   VERSION=v0.11.3 curl -fsSL https://raw.githubusercontent.com/dokku/docker-container-healthchecker/main/install.sh | sh
+#   VERSION=v0.14.1 curl -fsSL https://raw.githubusercontent.com/dokku/docker-container-healthchecker/main/install.sh | sh
 #
 # Environment variables:
-#   VERSION    Release tag to install (defaults to the latest release).
+#   VERSION    Release tag to install (defaults to the latest release; requires v0.10.0 or later).
 #   PLUGIN_DIR Override destination directory (defaults to $HOME/.docker/cli-plugins).
 
 set -eu
@@ -46,9 +46,8 @@ if [ -z "$VERSION" ]; then
   exit 1
 fi
 
-# Release assets are tarballs named like docker-container-healthchecker_<VER>_<os>_<arch>.tgz
-# containing a single binary docker-container-healthchecker-<arch>.
-asset="${NAME}_${VERSION#v}_${os}_${arch}.tgz"
+# Release assets are raw binaries named like docker-container-healthchecker-<os>-<arch>.
+asset="${NAME}-${os}-${arch}"
 url="https://github.com/${REPO}/releases/download/${VERSION}/${asset}"
 
 tmpdir="$(mktemp -d)"
@@ -56,10 +55,9 @@ trap 'rm -rf "$tmpdir"' EXIT INT TERM
 
 echo "downloading ${url}"
 curl -fsSL "$url" -o "${tmpdir}/${asset}"
-tar -xzf "${tmpdir}/${asset}" -C "$tmpdir"
 
 mkdir -p "$PLUGIN_DIR"
-install -m 0755 "${tmpdir}/${NAME}-${arch}" "${PLUGIN_DIR}/${PLUGIN_NAME}"
+install -m 0755 "${tmpdir}/${asset}" "${PLUGIN_DIR}/${PLUGIN_NAME}"
 
 echo "installed ${NAME} ${VERSION} to ${PLUGIN_DIR}/${PLUGIN_NAME}"
 echo "try: docker healthcheck version"
