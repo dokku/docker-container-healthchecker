@@ -23,7 +23,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Set up Go
         uses: actions/setup-go@v6
@@ -121,7 +121,7 @@ jobs:
           echo "arm64_sha=${ARM64_SHA}" >> "$GITHUB_OUTPUT"
 
       - name: Checkout homebrew-repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: dokku/homebrew-repo
           token: ${{ secrets.HOMEBREW_GITHUB_API_TOKEN }}
