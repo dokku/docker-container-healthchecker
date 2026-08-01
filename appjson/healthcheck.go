@@ -391,7 +391,7 @@ func (h Healthcheck) executePathCheck(container types.ContainerJSON, ctx Healthc
 	client.SetRetryWaitTime(time.Duration(h.GetWait()) * time.Second)
 	client.SetRetryDefaultConditions(false)
 	client.AddRetryConditions(func(response *resty.Response, err error) bool {
-		return err != nil || !response.IsSuccess()
+		return err != nil || !response.IsStatusSuccess()
 	})
 
 	if h.GetTimeout() > 0 {
@@ -439,7 +439,7 @@ func (h Healthcheck) executePathCheck(container types.ContainerJSON, ctx Healthc
 		return []byte{}, []error{fmt.Errorf("unable to read response body: %w", err)}
 	}
 
-	if !resp.IsSuccess() {
+	if !resp.IsStatusSuccess() {
 		return body, []error{fmt.Errorf("unexpected status code: %d", resp.StatusCode())}
 	}
 
