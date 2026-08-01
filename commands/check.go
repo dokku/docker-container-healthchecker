@@ -10,9 +10,9 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/client"
 	"github.com/josegonzalez/cli-skeleton/command"
+	container_types "github.com/moby/moby/api/types/container"
+	"github.com/moby/moby/client"
 	"github.com/posener/complete"
 	flag "github.com/spf13/pflag"
 
@@ -140,11 +140,12 @@ func (c *CheckCommand) Run(args []string) int {
 		return 1
 	}
 
-	container, err := cli.ContainerInspect(context.Background(), containerIDorName)
+	inspect, err := cli.ContainerInspect(context.Background(), containerIDorName, client.ContainerInspectOptions{})
 	if err != nil {
 		logger.Error(err.Error())
 		return 1
 	}
+	container := inspect.Container
 
 	if !container.State.Running {
 		logger.Error(fmt.Sprintf("Container state: %s", container.State.Status))
@@ -223,7 +224,7 @@ type HealthcheckResponse struct {
 	Warn            bool
 }
 
-func (c *CheckCommand) processHealthcheck(healthcheck appjson.Healthcheck, container types.ContainerJSON, logger *command.ZerologUi) HealthcheckResponse {
+func (c *CheckCommand) processHealthcheck(healthcheck appjson.Healthcheck, container container_types.InspectResponse, logger *command.ZerologUi) HealthcheckResponse {
 	tt, err := time.Parse(time.RFC3339, container.State.StartedAt)
 	if err != nil {
 		return HealthcheckResponse{
