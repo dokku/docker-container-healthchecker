@@ -21,10 +21,9 @@ import (
 
 	"github.com/alexellis/go-execute/v2"
 	retry "github.com/avast/retry-go"
-	"github.com/docker/docker/api/types"
-	container_types "github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/client"
-	"github.com/docker/docker/pkg/archive"
+	archive "github.com/moby/go-archive"
+	container_types "github.com/moby/moby/api/types/container"
+	"github.com/moby/moby/client"
 
 	"docker-container-healthchecker/logger"
 )
@@ -184,7 +183,7 @@ func (h Healthcheck) Validate() error {
 	return nil
 }
 
-func (h Healthcheck) Execute(container types.ContainerJSON, ctx HealthcheckContext) ([]byte, []error) {
+func (h Healthcheck) Execute(container container_types.InspectResponse, ctx HealthcheckContext) ([]byte, []error) {
 	if err := h.Validate(); err != nil {
 		return []byte{}, []error{err}
 	}
@@ -235,7 +234,7 @@ func (h Healthcheck) HandleFailure(errors []error) error {
 	return nil
 }
 
-func (h Healthcheck) executeCommandCheck(container types.ContainerJSON) ([]byte, []error) {
+func (h Healthcheck) executeCommandCheck(container container_types.InspectResponse) ([]byte, []error) {
 	var b []byte
 	err := retry.Do(
 		func() error {
@@ -254,7 +253,7 @@ func (h Healthcheck) executeCommandCheck(container types.ContainerJSON) ([]byte,
 	return b, nil
 }
 
-func (h Healthcheck) dockerExec(container types.ContainerJSON) ([]byte, error) {
+func (h Healthcheck) dockerExec(container container_types.InspectResponse) ([]byte, error) {
 	ctx := context.Background()
 	if h.GetTimeout() > 0 {
 		var cancel context.CancelFunc
@@ -319,7 +318,9 @@ func (h Healthcheck) dockerExec(container types.ContainerJSON) ([]byte, error) {
 		}
 		defer preparedArchive.Close()
 
-		err = cli.CopyToContainer(ctx, container.ID, dstDir, preparedArchive, container_types.CopyToContainerOptions{
+		_, err = cli.CopyToContainer(ctx, container.ID, client.CopyToContainerOptions{
+			DestinationPath:           dstDir,
+			Content:                   preparedArchive,
 			AllowOverwriteDirWithFile: true,
 		})
 		if err != nil {
@@ -332,10 +333,9 @@ func (h Healthcheck) dockerExec(container types.ContainerJSON) ([]byte, error) {
 	return runCommandInContainer(ctx, cli, container, h.Command)
 }
 
-func runCommandInContainer(ctx context.Context, cli *client.Client, container types.ContainerJSON, command []string) ([]byte, error) {
-	response, err := cli.ContainerExecCreate(ctx, container.ID, container_types.ExecOptions{
+func runCommandInContainer(ctx context.Context, cli *client.Client, container container_types.InspectResponse, command []string) ([]byte, error) {
+	response, err := cli.ExecCreate(ctx, container.ID, client.ExecCreateOptions{
 		Cmd:          command,
-		Detach:       false,
 		AttachStdout: true,
 		AttachStderr: true,
 	})
@@ -343,7 +343,7 @@ func runCommandInContainer(ctx context.Context, cli *client.Client, container ty
 		return nil, fmt.Errorf("unable to create exec: %w", err)
 	}
 
-	hijack, err := cli.ContainerExecAttach(ctx, response.ID, container_types.ExecAttachOptions{})
+	hijack, err := cli.ExecAttach(ctx, response.ID, client.ExecAttachOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("unable to attach to exec: %w", err)
 	}
@@ -351,7 +351,7 @@ func runCommandInContainer(ctx context.Context, cli *client.Client, container ty
 
 	var exitCode int
 	for {
-		execResp, err := cli.ContainerExecInspect(ctx, response.ID)
+		execResp, err := cli.ExecInspect(ctx, response.ID, client.ExecInspectOptions{})
 		if err != nil {
 			return nil, fmt.Errorf("unable to inspect exec: %w", err)
 		}
@@ -371,7 +371,7 @@ func runCommandInContainer(ctx context.Context, cli *client.Client, container ty
 	return nil, nil
 }
 
-func (h Healthcheck) executePathCheck(container types.ContainerJSON, ctx HealthcheckContext) ([]byte, []error) {
+func (h Healthcheck) executePathCheck(container container_types.InspectResponse, ctx HealthcheckContext) ([]byte, []error) {
 	ipAddress := ctx.IPAddress
 	if ipAddress == "" {
 		endpoint, ok := container.NetworkSettings.Networks[ctx.Network]
@@ -379,7 +379,9 @@ func (h Healthcheck) executePathCheck(container types.ContainerJSON, ctx Healthc
 			return []byte{}, []error{fmt.Errorf("inspect container: container '%s' not connected to network '%s'", container.ID, ctx.Network)}
 		}
 
-		ipAddress = endpoint.IPAddress
+		if endpoint.IPAddress.IsValid() {
+			ipAddress = endpoint.IPAddress.String()
+		}
 	}
 
 	client := resty.New()
@@ -450,7 +452,7 @@ func (h Healthcheck) executePathCheck(container types.ContainerJSON, ctx Healthc
 	return body, []error{}
 }
 
-func (h Healthcheck) executeUptimeCheck(container types.ContainerJSON) ([]byte, []error) {
+func (h Healthcheck) executeUptimeCheck(container container_types.InspectResponse) ([]byte, []error) {
 	tt, err := time.Parse(time.RFC3339Nano, container.State.StartedAt)
 	if err != nil {
 		return []byte{}, []error{err}
@@ -473,10 +475,11 @@ func (h Healthcheck) executeUptimeCheck(container types.ContainerJSON) ([]byte, 
 		return []byte{}, []error{err}
 	}
 
-	container, err = cli.ContainerInspect(context.Background(), container.ID)
+	inspect, err := cli.ContainerInspect(context.Background(), container.ID, client.ContainerInspectOptions{})
 	if err != nil {
 		return []byte{}, []error{err}
 	}
+	container = inspect.Container
 
 	status := fmt.Sprintf("state=%s", container.State.Status)
 	if !container.State.Running {
@@ -490,7 +493,7 @@ func (h Healthcheck) executeUptimeCheck(container types.ContainerJSON) ([]byte, 
 	return []byte(status), []error{}
 }
 
-func (h Healthcheck) executeListenerCheck(container types.ContainerJSON) ([]byte, []error) {
+func (h Healthcheck) executeListenerCheck(container container_types.InspectResponse) ([]byte, []error) {
 	err := retry.Do(
 		func() error {
 			return h.listeningCheck(container)
@@ -506,7 +509,7 @@ func (h Healthcheck) executeListenerCheck(container types.ContainerJSON) ([]byte
 	return []byte{}, nil
 }
 
-func (h Healthcheck) listeningCheck(container types.ContainerJSON) error {
+func (h Healthcheck) listeningCheck(container container_types.InspectResponse) error {
 	if !container.State.Running {
 		return errors.New("container state is not running")
 	}
