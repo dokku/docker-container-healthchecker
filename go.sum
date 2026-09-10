@@ -184,5 +184,5 @@ gotest.tools/v3 v3.5.2 h1:7koQfIKdy+I8UTetycgUqXWSDwpgv193Ka+qRsmBY8Q=
 gotest.tools/v3 v3.5.2/go.mod h1:LtdLGcnqToBH83WByAAi/wiwSFCArdFIUV/xxN4pcjA=
 pgregory.net/rapid v1.2.0 h1:keKAYRcjm+e1F0oAuU5F5+YPAWcyxNNRK2wud503Gnk=
 pgregory.net/rapid v1.2.0/go.mod h1:PY5XlDGj0+V1FCq0o192FdRhpKHGTRIWBgqjDBTrq04=
-resty.dev/v3 v3.0.0-rc.3 h1:k24LZ03Cb4Ue5e6O/Pfxu5TQRBBYGES6wm2wceia+Io=
-resty.dev/v3 v3.0.0-rc.3/go.mod h1:NTOerrC/4T7/FE6tXIZGIysXXBdgNqwMZuKtxpea9NM=
+resty.dev/v3 v3.0.0-rc.4 h1:n3360yEcFiyrX5Vkc9XG3Y8kMM24alRBxJ9Ev1mLmqs=
+resty.dev/v3 v3.0.0-rc.4/go.mod h1:NTOerrC/4T7/FE6tXIZGIysXXBdgNqwMZuKtxpea9NM=
