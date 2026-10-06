@@ -9,8 +9,8 @@ require (
 	github.com/josegonzalez/cli-skeleton v0.25.0
 	github.com/mitchellh/cli v1.1.5
 	github.com/moby/go-archive v0.3.3
-	github.com/moby/moby/api v1.56.0
-	github.com/moby/moby/client v0.6.0
+	github.com/moby/moby/api v1.56.1
+	github.com/moby/moby/client v0.6.1
 	github.com/posener/complete v1.2.3
 	github.com/spf13/pflag v1.0.10
 	resty.dev/v3 v3.0.0-rc.4
@@ -29,7 +29,7 @@ require (
 	github.com/containerd/errdefs/pkg v0.3.0 // indirect
 	github.com/containerd/log v0.1.0 // indirect
 	github.com/distribution/reference v0.6.0 // indirect
-	github.com/docker/go-connections v0.7.0 // indirect
+	github.com/docker/go-connections v0.8.1 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/fatih/color v1.18.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
