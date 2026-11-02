@@ -43,26 +43,30 @@ jobs:
     needs: build
     steps:
       - uses: actions/checkout@v7
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: "go.mod"
       - name: Get Repository Name
         id: repo-name
         run: |
           echo "REPOSITORY_NAME=$(echo "${{ github.repository }}" | cut -d '/' -f 2)" >> $GITHUB_OUTPUT
           echo "TARGET_ARCHITECTURE=$(dpkg --print-architecture)" >> $GITHUB_OUTPUT
-          echo "GO_VERSION=$(go mod edit -json | jq -r .Go)" >> $GITHUB_OUTPUT
+      # built the way a release is, without cgo
       - name: Build binaries
-        uses: crazy-max/ghaction-xgo@v4
-        with:
-          xgo_version: latest
-          go_version: "${{ steps.repo-name.outputs.GO_VERSION }}"
-          dest: dist
-          prefix: ${{ steps.repo-name.outputs.REPOSITORY_NAME }}
-          targets: linux/${{ steps.repo-name.outputs.TARGET_ARCHITECTURE }}
-          v: true
-          x: false
-          race: false
-          ldflags: -s -w -X main.Version=${{ github.ref_name }}
-          buildmode: default
-          trimpath: true
+        run: |
+          mkdir -p dist
+          CGO_ENABLED=0 GOOS=linux GOARCH="${{ steps.repo-name.outputs.TARGET_ARCHITECTURE }}" go build -v -trimpath \
+            -ldflags "-s -w -X main.Version=${{ github.ref_name }}" \
+            -o "dist/${{ steps.repo-name.outputs.REPOSITORY_NAME }}-linux-${{ steps.repo-name.outputs.TARGET_ARCHITECTURE }}"
+      # a binary linked against a newer glibc does not start on ubuntu:20.04,
+      # and prints nothing to stdout there
       - name: Check version
         run: |
-          "dist/${{ steps.repo-name.outputs.REPOSITORY_NAME }}-linux-${{ steps.repo-name.outputs.TARGET_ARCHITECTURE }}" --version
+          version="$(docker run --rm --volume "$PWD/dist:/dist:ro" ubuntu:20.04 "/dist/${{ steps.repo-name.outputs.REPOSITORY_NAME }}-linux-${{ steps.repo-name.outputs.TARGET_ARCHITECTURE }}" version)"
+          if [[ -z "$version" ]]; then
+            echo "binary reported an empty version on ubuntu:20.04"
+            exit 1
+          fi
+
+          echo "binary reports $version on ubuntu:20.04"
