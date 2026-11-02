@@ -34,22 +34,25 @@ jobs:
         id: repo-name
         run: |
           echo "REPOSITORY_NAME=$(echo "${{ github.repository }}" | cut -d '/' -f 2)" >> $GITHUB_OUTPUT
-          echo "GO_VERSION=$(go mod edit -json | jq -r .Go)" >> $GITHUB_OUTPUT
 
+      # built without cgo so that the binaries are statically linked. A cgo build
+      # links against the glibc of the machine it was built on, and does not
+      # start on a server with an older one
       - name: Build binaries
-        uses: crazy-max/ghaction-xgo@v4
-        with:
-          xgo_version: latest
-          go_version: "${{ steps.repo-name.outputs.GO_VERSION }}"
-          dest: dist
-          prefix: ${{ steps.repo-name.outputs.REPOSITORY_NAME }}
-          targets: darwin/amd64,darwin/arm64,linux/arm64,linux/amd64,windows/amd64
-          v: true
-          x: false
-          race: false
-          ldflags: -s -w -X main.Version=${{ github.ref_name }}
-          buildmode: default
-          trimpath: true
+        run: |
+          mkdir -p dist
+          for target in darwin/amd64 darwin/arm64 linux/amd64 linux/arm64 windows/amd64; do
+            goos="${target%/*}"
+            goarch="${target#*/}"
+            extension=""
+            if [[ "$goos" == "windows" ]]; then
+              extension=".exe"
+            fi
+
+            CGO_ENABLED=0 GOOS="$goos" GOARCH="$goarch" go build -v -trimpath \
+              -ldflags "-s -w -X main.Version=${{ github.ref_name }}" \
+              -o "dist/${{ steps.repo-name.outputs.REPOSITORY_NAME }}-${goos}-${goarch}${extension}"
+          done
 
       - name: Attest Build Provenance - darwin-amd64
         uses: actions/attest-build-provenance@v4
