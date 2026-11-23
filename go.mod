@@ -6,7 +6,7 @@ require (
 	github.com/Jeffail/gabs/v2 v2.7.0
 	github.com/alexellis/go-execute/v2 v2.2.1
 	github.com/avast/retry-go v3.0.0+incompatible
-	github.com/josegonzalez/cli-skeleton v0.25.0
+	github.com/josegonzalez/cli-skeleton v0.26.0
 	github.com/mitchellh/cli v1.1.5
 	github.com/moby/go-archive v0.3.3
 	github.com/moby/moby/api v1.57.0
@@ -40,7 +40,7 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/huandu/xstrings v1.5.0 // indirect
 	github.com/klauspost/compress v1.18.7 // indirect
-	github.com/mattn/go-colorable v0.1.14 // indirect
+	github.com/mattn/go-colorable v0.1.16 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
@@ -64,8 +64,8 @@ require (
 	go.opentelemetry.io/otel/sdk v1.47.0 // indirect
 	go.opentelemetry.io/otel/sdk/metric v1.47.0 // indirect
 	go.opentelemetry.io/otel/trace v1.47.0 // indirect
-	golang.org/x/crypto v0.52.0 // indirect
-	golang.org/x/net v0.55.0 // indirect
-	golang.org/x/sys v0.48.0 // indirect
-	golang.org/x/term v0.43.0 // indirect
+	golang.org/x/crypto v0.59.0 // indirect
+	golang.org/x/net v0.62.0 // indirect
+	golang.org/x/sys v0.50.0 // indirect
+	golang.org/x/term v0.48.0 // indirect
 )
